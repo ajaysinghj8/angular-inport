@@ -9,21 +9,28 @@
   "keywords": [
     "inview",
     "Angular2",
-    "Angular",
-    "2",
-    "Angular2",
-    "inview",
-    "Angular",
-    "2",
-    "inview",
+    "Angular 2",
+    "Angular2 inview",
+    "Angular 2 inview",
     "viewport",
-    "ng",
-    "inview",
-    "ng2",
-    "inview",
-    "viewport",
-    "check"
+    "ng inview",
+    "ng2 inview",
+    "viewport check"
   ],
   "author": "Ajay Singh <meajaysingh@hotmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    
+  },
+  "devDependencies": {
+    "tslint": "3.13.0",
+    "typescript": "~2.0.3"
+  },
+  "peerDependencies": {
+     "@angular/common": "^2.1.0",
+    "@angular/compiler": "^2.1.0",
+    "@angular/core": "^2.1.0",
+    "rxjs": "5.0.0-beta.12",
+    "zone.js": "^0.6.23"
+  }
 }
