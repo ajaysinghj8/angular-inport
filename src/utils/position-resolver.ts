@@ -12,18 +12,18 @@ export class PositionResolver {
     return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
   }
 
-  static intersectRect(r1, r2): boolean {
+  static intersectRect(r1: any, r2: any): boolean {
     return !(r2.left > r1.right ||
       r2.right < r1.left ||
       r2.top > r1.bottom ||
       r2.bottom < r1.top);
   }
 
-  static offsetRect(rect, offset): ClientRect {
+  static offsetRect(rect: any, offset:Array<any>): ClientRect {
     if (!offset) {
       return rect;
     }
-    let offsetObject = {
+    let offsetObject: any = {
       top: isPercent(offset[0]) ? (parseFloat(offset[0]) * rect.height) : offset[0],
       right: isPercent(offset[1]) ? (parseFloat(offset[1]) * rect.width) : offset[1],
       bottom: isPercent(offset[2]) ? (parseFloat(offset[2]) * rect.height) : offset[2],
