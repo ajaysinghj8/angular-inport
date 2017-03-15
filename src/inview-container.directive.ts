@@ -18,7 +18,7 @@ import { ElementBoundingPositions } from './utils/models';
 // then only the futher calculation should take place
 
 @Directive({
-  selector: '[inview-container]'
+  selector: '[in-view-container]'
 })
 export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewInit {
   private _scrollSuscription: Subscription;
@@ -28,7 +28,7 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
   private _throttle: number = 0;
   private _scrollWindow: boolean = true;
   private _data: any;
-
+  private _bestMatch: boolean;
 
   @Input()
   set offset(offset: Array<number> | number) {
@@ -49,6 +49,10 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
   @Input()
   set data(_d: any) {
     this._data = _d;
+  }
+  @Input()
+  set bestMatch(bm: any) {
+    this._bestMatch = !!bm;
   }
 
   @Output() inview: EventEmitter<any> = new EventEmitter();
@@ -84,13 +88,33 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
     // Note:: check all children from parent if it is in view or not
     // for cache of less iterations start from the last visible  item then based on scroll up and down check list futher
     let viewPortOffsetRect = PositionResolver.offsetRect(containersBounds, this._viewPortOffset);
-
+    let visibleChildren: Array<any> = [];
     if (this._inviewChildren) {
-      let visibleChildren: Array<any> = this._inviewChildren.toArray().filter((child: InviewItemDirective) => {
+      visibleChildren = this._inviewChildren.toArray().filter((child: InviewItemDirective) => {
         let elementOffsetRect = PositionResolver.offsetRect(child.getELementRect(), this._offset);
         return child.isVisible() && PositionResolver.intersectRect(elementOffsetRect, viewPortOffsetRect);
-      }).map((child: InviewItemDirective) =>  child.getData());
-      this._zone.run(() => this.inview.emit(visibleChildren));
+      });
+      if (this._bestMatch) {
+        let bestMatchChild: InviewItemDirective;
+        if (visibleChildren.length) {
+          visibleChildren.reduce((distance: number, currChild: InviewItemDirective) => {
+            let _distance = PositionResolver.distance(viewPortOffsetRect, PositionResolver.offsetRect(currChild.getELementRect(), this._offset));
+            if (distance > _distance) {
+              bestMatchChild = currChild;
+              return _distance;
+            }
+            return distance;
+          }, Infinity);
+        }
+        this._zone.run(() => this.inview.emit(
+          bestMatchChild ? bestMatchChild.getData() : null
+        ));
+      } else {
+        this._zone.run(() => this.inview.emit(
+          visibleChildren.map((vc: InviewItemDirective) => vc.getData())
+        ));
+      }
+
     }
   }
 
