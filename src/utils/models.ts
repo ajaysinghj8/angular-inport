@@ -6,3 +6,8 @@ export type ElementBoundingPositions = {
 };
 
 export type WindowElement = HTMLElement | Window;
+
+export type Point = {
+  x: number;
+  y: number;
+}
