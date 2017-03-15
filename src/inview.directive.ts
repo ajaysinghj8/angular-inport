@@ -7,7 +7,7 @@ import { ElementBoundingPositions } from './utils/models';
 import { WindowRuler } from './utils/viewport-ruler';;
 
 @Directive({
-  selector: '[in-view inview]'
+  selector: '[in-view]'
 })
 export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   private _throttleType: string = 'debounce';
