@@ -1,8 +1,10 @@
-import { ElementBoundingPositions } from './models';
+import { ElementBoundingPositions, Point } from './models';
 function isPercent(value: any): boolean {
   return typeof value === 'string' && value.indexOf('%') > -1;
 }
-
+function distance(p1: Point, p2: Point) {
+  return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+}
 export class PositionResolver {
   static getBoundingClientRect(element: HTMLElement): ClientRect {
     return element.getBoundingClientRect();
@@ -19,7 +21,7 @@ export class PositionResolver {
       r2.bottom < r1.top);
   }
 
-  static offsetRect(rect: any, offset:Array<any>): ClientRect {
+  static offsetRect(rect: any, offset: Array<any>): ClientRect {
     if (!offset) {
       return rect;
     }
@@ -37,6 +39,18 @@ export class PositionResolver {
       height: rect.height + offsetObject.top + offsetObject.bottom,
       width: rect.width + offsetObject.left + offsetObject.right
     };
+  }
+
+  static distance(containerRect: any, elementRect: any) {
+    let middlePointOfContainer: Point = {
+      x: containerRect.height / 2,
+      y: containerRect.width / 2
+    };
+    let middlePointOfElement: Point = {
+      x: elementRect.top + (elementRect.height / 2),
+      y: elementRect.left + (elementRect.width / 2)
+    };
+    return distance(middlePointOfContainer, middlePointOfElement);
   }
 
   static inviewPercentage(containerRect: any, elementRect: any) {
