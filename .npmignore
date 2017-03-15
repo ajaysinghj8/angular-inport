@@ -1,7 +1,6 @@
 # compiled output
 /.tmp
 /src
-/tslint.json
 
 /Architecture.md
 # dependencies
@@ -16,6 +15,9 @@
 .c9/
 *.launch
 .settings/
+tslint.json
+.editorconfig
+
 
 # misc
 /.sass-cache
