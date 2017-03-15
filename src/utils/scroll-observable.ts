@@ -4,7 +4,7 @@ import 'rxjs/add/observable/fromEvent';
 import 'rxjs/add/observable/merge';
 import 'rxjs/add/operator/share';
 import { WindowRuler } from './viewport-ruler';
-type WindowElement = HTMLElement | Window;
+import { WindowElement } from './models';
 
 @Injectable()
 export class ScrollObservable {
