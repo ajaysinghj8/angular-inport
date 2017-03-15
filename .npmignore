@@ -1,8 +1,8 @@
 # compiled output
-/dist
-/tmp
 /.tmp
+/src
 
+/Architecture.md
 # dependencies
 /node_modules
 /bower_components
@@ -15,6 +15,9 @@
 .c9/
 *.launch
 .settings/
+tslint.json
+.editorconfig
+
 
 # misc
 /.sass-cache

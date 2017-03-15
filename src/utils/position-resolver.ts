@@ -1,0 +1,89 @@
+import { ElementBoundingPositions } from './models';
+function isPercent(value: any): boolean {
+  return typeof value === 'string' && value.indexOf('%') > -1;
+}
+
+export class PositionResolver {
+  static getBoundingClientRect(element: HTMLElement): ClientRect {
+    return element.getBoundingClientRect();
+  }
+
+  static isVisible(element: HTMLElement): boolean {
+    return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
+  }
+
+  static intersectRect(r1, r2): boolean {
+    return !(r2.left > r1.right ||
+      r2.right < r1.left ||
+      r2.top > r1.bottom ||
+      r2.bottom < r1.top);
+  }
+
+  static offsetRect(rect, offset): ClientRect {
+    if (!offset) {
+      return rect;
+    }
+    let offsetObject = {
+      top: isPercent(offset[0]) ? (parseFloat(offset[0]) * rect.height) : offset[0],
+      right: isPercent(offset[1]) ? (parseFloat(offset[1]) * rect.width) : offset[1],
+      bottom: isPercent(offset[2]) ? (parseFloat(offset[2]) * rect.height) : offset[2],
+      left: isPercent(offset[3]) ? (parseFloat(offset[3]) * rect.width) : offset[3]
+    };
+    return {
+      top: rect.top - offsetObject.top,
+      left: rect.left - offsetObject.left,
+      bottom: rect.bottom + offsetObject.bottom,
+      right: rect.right + offsetObject.right,
+      height: rect.height + offsetObject.top + offsetObject.bottom,
+      width: rect.width + offsetObject.left + offsetObject.right
+    };
+  }
+
+  static inviewPercentage(containerRect: any, elementRect: any) {
+    return {
+      top: 100 * elementRect.top / containerRect.top,
+      left: 100 * elementRect.left / containerRect.left,
+      bottom: 100 * elementRect.bottom / containerRect.bottom,
+      right: 100 * elementRect.right / containerRect.right
+    };
+  }
+
+  static inViewParts(containerRect: any, elementRect: any) {
+    return {
+      top: elementRect.top >= containerRect.top,
+      left: elementRect.left >= containerRect.left,
+      bottom: elementRect.bottom <= containerRect.bottom,
+      right: elementRect.right <= containerRect.right
+    };
+  }
+
+  static isElementOutsideView(
+    elementBounds: ElementBoundingPositions,
+    containersBounds: ElementBoundingPositions): boolean {
+    const outsideAbove = elementBounds.bottom < containersBounds.top;
+    const outsideBelow = elementBounds.top > containersBounds.bottom;
+    const outsideLeft = elementBounds.right < containersBounds.left;
+    const outsideRight = elementBounds.left > containersBounds.right;
+    return outsideAbove || outsideBelow || outsideLeft || outsideRight;
+
+  }
+
+  static isElementClipped(
+    elementBounds: ElementBoundingPositions,
+    containersBounds: ElementBoundingPositions): boolean {
+    const clippedAbove = elementBounds.top < containersBounds.top;
+    const clippedBelow = elementBounds.bottom > containersBounds.bottom;
+    const clippedLeft = elementBounds.left < containersBounds.left;
+    const clippedRight = elementBounds.right > containersBounds.right;
+
+    return clippedAbove || clippedBelow || clippedLeft || clippedRight;
+  }
+  static clippedStatus(
+    elementBounds: ElementBoundingPositions,
+    containersBounds: ElementBoundingPositions) {
+    return {
+      isClipped: this.isElementClipped(elementBounds, containersBounds),
+      isOutsideView: this.isElementOutsideView(elementBounds, containersBounds)
+    };
+  }
+}
