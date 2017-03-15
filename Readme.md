@@ -1,16 +1,21 @@
-# Ng2 Inview 
+# Ng2 Inview
 
+## Inview Directive
 
+#### Basic Usages
 
 ```html
+
 <div in-view (inview)="inview($event)">
 </div>    
 
 
 ```
 
+#### Advanced Usages
 
 ```html
+
 <div in-view
           (inview)="inview($event)"
           [offset]="[top, right, bottom, left]" or "[top/bottom, left/right]" or "[top/bottom/left/right]"
@@ -20,8 +25,25 @@
           >
           .......
 </div>
+
 ```
 
+## InviewContainer and InviewItem Directive
+
+#### Basic Usages
+
+```html
+
+<div in-view-container (inview)="inview($event)">
+   <div in-view-item *ngFor="let item of items; let i = index;" [id]="index" [data]="item">
+     .......
+   </div>
+</div>
+
+```
+
+
+#### Advanced Usages
 
 ```html
 
@@ -36,4 +58,5 @@
      .......
    </div>
 </div>
+
 ```
