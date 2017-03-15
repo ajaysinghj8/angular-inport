@@ -4,3 +4,5 @@ export type ElementBoundingPositions = {
   bottom: number;
   left: number;
 };
+
+export type WindowElement = HTMLElement | Window;
