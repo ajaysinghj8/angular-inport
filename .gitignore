@@ -1,4 +1,5 @@
 # compiled output
+/bundles
 /dist
 /tmp
 /.tmp
