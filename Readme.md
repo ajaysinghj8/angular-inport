@@ -3,22 +3,31 @@
 
 
 ```html
-<ng-inview (inview)="inview($event)">
-</ng-inview>    
+<div in-view (inview)="inview($event)">
+</div>    
 
 
 ```
 
 
 ```html
-<ng-inview 
-          (inview)="inview()"
+<div in-view
+          (inview)="inview($event)"
           [offset]="[top, right, bottom, left]" or "[top/bottom, left/right]" or "[top/bottom/left/right]"
           [viewPortOffset]="[top, right, bottom, left]" or "[top/bottom, left/right]" or "[top/bottom/left/right]"
           [throttle]="[Number in ms to limit the inview event]"
           [scrollELement]="parent element reference on which scrolling applied" 
           >
-</ng-inview>
+          .......
+</div>
 ```
 
 
+```html
+
+<div in-view-container (inview)="inview($event)">
+   <div in-view-item *ngFor="let item of items; let i = index;" [id]="index" [data]="item">
+     .......
+   </div>
+</div>
+```
