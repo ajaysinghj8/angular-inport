@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "node ./node_modules/@angular/compiler-cli/src/main.js -p src/",
-    "prepublish": "npm run clean &&  npm run compile && npm run build",
+    "prepublish": "npm run clean &&  npm run compile && rm -rf dist/node_modules && npm run build",
     "clean": "rm -rf dist && rm -rf bundles",
     "build": "node make.js"
   },
