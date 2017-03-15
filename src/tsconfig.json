@@ -9,6 +9,7 @@
     "inlineSources": true,
     "declaration": true,
     "suppressImplicitAnyIndexErrors": true,
+    "removeComments": true,
     "moduleResolution": "node",
     "lib": [
       "dom",
