@@ -1,6 +1,6 @@
 {
   "name": "ng2-inview",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Angular 2 inview for infinite scrolling or checking if the section is in the viewport.",
   "main": "dist/inview.module.js",
   "typings": "dist/inview.module.d.ts",
@@ -20,21 +20,22 @@
     "viewport",
     "ng inview",
     "ng2 inview",
+    "view port",
     "viewport check"
   ],
   "author": "Ajay Singh (meajaysingh@hotmail.com)",
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
-    "@angular/common": "^2.1.0",
-    "@angular/compiler": "^2.1.0",
-    "@angular/compiler-cli": "^2.4.9",
-    "@angular/core": "^2.1.0",
-    "rxjs": "5.0.0-beta.12",
+    "@angular/common": "2.4.0",
+    "@angular/compiler": "^2.4.0",
+    "@angular/compiler-cli": "^2.4.0",
+    "@angular/core": "^2.4.0",
+    "rxjs": "^5.2.0",
     "systemjs-builder": "^0.16.3",
-    "tslint": "3.13.0",
-    "typescript": "~2.0.3",
-    "zone.js": "^0.6.23"
+    "tslint": "^4.5.0",
+    "typescript": "^2.2.0",
+    "zone.js": "^0.8.0"
   },
   "peerDependencies": {
     "@angular/core": "^2.1.0",
