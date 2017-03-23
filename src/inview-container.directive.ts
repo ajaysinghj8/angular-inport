@@ -29,6 +29,8 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
   private _scrollWindow: boolean = true;
   private _data: any;
   private _bestMatch: boolean;
+  private _lastScrollY: number = 0;
+  private _scrollDirection: string = 'down';
 
   @Input()
   set offset(offset: Array<number> | number) {
@@ -67,13 +69,25 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
 
   ngOnInit() { }
   ngAfterViewInit() {
-    this._scrollSuscription = this._scrollObservable.scrollObservableFor(window)
+    this._scrollSuscription = this._scrollObservable.scrollObservableFor(this._scrollWindow?window: this._element.nativeElement)
     [this._throttleType](() => Observable.timer(this._throttle))
       .filter(() => true)
       .mergeMap((event: any) => Observable.of(this._getViewPortRuler()))
+      .do(()=> this._checkScrollDirection())
       .subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
 
   }
+
+  private _checkScrollDirection(){
+    if(this._scrollWindow){
+     this._scrollDirection = (window.scrollY > this._lastScrollY) ? 'down' : 'up';
+     this._lastScrollY = window.scrollY;
+    }else{
+     this._scrollDirection = (this._element.nativeElement.scrollTop > this._lastScrollY) ? 'down' : 'up';
+     this._lastScrollY = this._element.nativeElement.scrollTop;
+    }
+  }
+
   private _getViewPortRuler() {
     return this._scrollWindow ? this._windowRuler.getWindowViewPortRuler() : PositionResolver.getBoundingClientRect(this._element.nativeElement);
   }
@@ -106,13 +120,14 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
             return distance;
           }, Infinity);
         }
-        this._zone.run(() => this.inview.emit(
-          bestMatchChild ? bestMatchChild.getData() : null
-        ));
+        let data:any =  bestMatchChild?bestMatchChild.getData(): {};
+        data.direction = this._scrollDirection;
+        this._zone.run(() => this.inview.emit(data));
       } else {
-        this._zone.run(() => this.inview.emit(
-          visibleChildren.map((vc: InviewItemDirective) => vc.getData())
-        ));
+        let data:any = {};
+        data.inview =  visibleChildren.map((vc: InviewItemDirective) => vc.getData());
+        data.direction = this._scrollDirection;
+        this._zone.run(() => this.inview.emit(data));
       }
 
     }
