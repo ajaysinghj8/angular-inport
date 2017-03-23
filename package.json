@@ -11,6 +11,14 @@
     "clean": "rm -rf dist && rm -rf bundles",
     "build": "node make.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CoderAjay/ng2-inview.git"
+  },
+  "bugs": {
+    "url": "https://github.com/CoderAjay/ng2-inview/issues"
+  },
+  "homepage": "https://github.com/CoderAjay/ng2-inview#readme",
   "keywords": [
     "inview",
     "Angular2",
