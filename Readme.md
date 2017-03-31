@@ -1,7 +1,9 @@
 # Angular In Port / Angular In View Port
 
 ## Inview Directive 
-   > npm install angular-inport
+
+npm install angular-inport
+
 ## Importing module 
  
 ```js
