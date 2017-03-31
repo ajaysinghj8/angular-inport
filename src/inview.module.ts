@@ -10,4 +10,4 @@ import { WindowRuler } from './utils/viewport-ruler';
   exports: [InviewDirective, InviewContainerDirective, InviewItemDirective],
   providers: [ScrollObservable, WindowRuler]
 })
-export class Ng2InviewModule { }
+export class NgInviewModule { }

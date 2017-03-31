@@ -1,6 +1,27 @@
-# Ng2 Inview
+# Angular In Port / Angular In View Port
 
-## Inview Directive
+## Inview Directive 
+   > npm install angular-inport
+## Importing module 
+ 
+```js
+import { NgInviewModule } from 'angular-inport'; 
+@NgModule({                                   
+    imports: [
+        ....,                                
+        NgInviewModule                       
+    ],
+    declarations: [YourAppComponent ],
+    exports: [YourAppComponent],
+    bootstrap: [YourAppComponent],
+})
+.....
+
+
+```
+
+
+
 
 #### Basic Usages
 
