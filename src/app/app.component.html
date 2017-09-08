@@ -1,0 +1,22 @@
+<div style="height:1500px;">
+
+
+  <header>
+    <h1>Basic Usage</h1>
+    inview status
+    <ul>
+      <li> status: {{state.status}}</li>
+      <li> isClipped: {{state.isClipped}}</li>
+      <li> isOutsideView: {{state.isOutsideView}}</li>
+      <li> parts : {{state.parts | json}}</li>
+    </ul>
+
+  </header>
+
+  <div in-view (inview)="inview($event)">
+    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Enim neque nobis, velit a doloremque consequatur nemo ipsum commodi
+    voluptate explicabo fugit, odit sapiente, dignissimos! Similique reprehenderit, nobis dolorum facilis amet?
+  </div>
+
+
+</div>

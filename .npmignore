@@ -36,3 +36,12 @@ testem.log
 #System Files
 .DS_Store
 Thumbs.db
+
+
+# angular-cli
+.angular-cli.json
+.gitignore
+karma.conf.js
+protractor.conf.js
+tsconfig-lib.json
+tsconfig.json
