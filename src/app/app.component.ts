@@ -6,5 +6,9 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
+  state: any = {};
   title = 'app';
+  inview($event) {
+    this.state = $event;
+  }
 }

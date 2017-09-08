@@ -1,0 +1,14 @@
+header{
+    top: 0px;
+    z-index: 1;
+    position: fixed;
+    background: white;
+    width: 100%;
+}
+div [in-view]{
+  top: 1000px;
+  height: 300px;
+  width: 100%;
+  border: 5px solid;
+  position: relative;
+}
