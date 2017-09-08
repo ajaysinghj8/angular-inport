@@ -36,6 +36,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
+    "clean-build":"rm -rf dist",
+    "prepublish": "npm run clean-build \n npm run build-npm",
     "build-npm": "ngc -p tsconfig-lib.json"
   },
   "private": false,
