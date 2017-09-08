@@ -8,7 +8,7 @@ import { WindowElement } from './models';
 
 @Injectable()
 export class ScrollObservable {
-  static _globalObservable: Observable<any> = null;
+  static _globalObservable: Observable<any>;
   static _elementObservableReferences: Map<WindowElement, Observable<any>> = new Map();
   static isWindow(windowElement: WindowElement) {
     return Object.prototype.toString.call(windowElement).includes('Window');
@@ -33,7 +33,7 @@ export class ScrollObservable {
       return ScrollObservable._globalObservable;
     }
     if (ScrollObservable._elementObservableReferences.has(windowElement)) {
-      return ScrollObservable._elementObservableReferences.get(windowElement);
+      return <Observable<any>>ScrollObservable._elementObservableReferences.get(windowElement);
     }
     const ref = this._createElementObservable(windowElement);
     ScrollObservable._elementObservableReferences.set(windowElement, ref);

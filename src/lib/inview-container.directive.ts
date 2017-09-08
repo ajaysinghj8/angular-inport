@@ -109,7 +109,7 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
         return child.isVisible() && PositionResolver.intersectRect(elementOffsetRect, viewPortOffsetRect);
       });
       if (this._bestMatch) {
-        let bestMatchChild: InviewItemDirective;
+        let bestMatchChild: InviewItemDirective|any = 0;
         if (visibleChildren.length) {
           visibleChildren.reduce((distance: number, currChild: InviewItemDirective) => {
             let _distance = PositionResolver.distance(viewPortOffsetRect, PositionResolver.offsetRect(currChild.getELementRect(), this._offset));

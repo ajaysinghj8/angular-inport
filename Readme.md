@@ -1,85 +1,28 @@
-# Angular In Port / Angular In View Port
+# AngularInport
 
-## Inview Directive 
+This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 1.2.7.
 
-npm install angular-inport
+## Development server
 
-## Importing module 
- 
-```js
-import { NgInviewModule } from 'angular-inport'; 
-@NgModule({                                   
-    imports: [
-        ....,                                
-        NgInviewModule                       
-    ],
-    declarations: [YourAppComponent ],
-    exports: [YourAppComponent],
-    bootstrap: [YourAppComponent],
-})
-.....
+Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
+## Code scaffolding
 
-```
+Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
 
+## Build
 
+Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `-prod` flag for a production build.
 
+## Running unit tests
 
-#### Basic Usages
+Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
 
-```html
+## Running end-to-end tests
 
-<div in-view (inview)="inview($event)">
-</div>    
+Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+Before running the tests make sure you are serving the app via `ng serve`.
 
+## Further help
 
-```
-
-#### Advanced Usages
-
-```html
-
-<div in-view
-          (inview)="inview($event)"
-          [offset]="[top, right, bottom, left]" or "[top/bottom, left/right]" or "[top/bottom/left/right]"
-          [viewPortOffset]="[top, right, bottom, left]" or "[top/bottom, left/right]" or "[top/bottom/left/right]"
-          [throttle]="[Number in ms to limit the inview event]"
-          [scrollELement]="parent element reference on which scrolling applied" 
-          >
-          .......
-</div>
-
-```
-
-## InviewContainer and InviewItem Directive
-
-#### Basic Usages
-
-```html
-
-<div in-view-container (inview)="inview($event)">
-   <div in-view-item *ngFor="let item of items; let i = index;" [id]="index" [data]="item">
-     .......
-   </div>
-</div>
-
-```
-
-
-#### Advanced Usages
-
-```html
-
-<div in-view-container 
-                    (inview)="inview($event)"
-                    [offset]="[top, right, bottom, left]" or "[top/bottom, left/right]" or "[top/bottom/left/right]"
-                    [viewPortOffset]="[top, right, bottom, left]" or "[top/bottom, left/right]" or "[top/bottom/left/right]"
-                    [throttle]="[Number in ms to limit the inview event]"
-                    [bestMatch]="when true, inview will return only one element closet to viewport center"
-                    >
-   <div in-view-item *ngFor="let item of items; let i = index;" [id]="index" [data]="item">
-     .......
-   </div>
-</div>
-
-```
+To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
