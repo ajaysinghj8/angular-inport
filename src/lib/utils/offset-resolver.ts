@@ -1,11 +1,11 @@
 export class OffsetResolverFactory {
-  static create(offset: Array<number> | number) {
+  static create(offset: Array<number|string> | number | string) {
     return new OffsetResolver(offset);
   }
 }
 
 export class OffsetResolver {
-  constructor(private offset: Array<number>| number) {}
+  constructor(private offset: Array<number|string>| number|string) {}
 
   normalizeOffset() {
     if (!Array.isArray(this.offset)) {

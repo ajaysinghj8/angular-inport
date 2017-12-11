@@ -25,11 +25,11 @@ export class PositionResolver {
     if (!offset) {
       return rect;
     }
-    let offsetObject: any = {
-      top: isPercent(offset[0]) ? (parseFloat(offset[0]) * rect.height) : offset[0],
-      right: isPercent(offset[1]) ? (parseFloat(offset[1]) * rect.width) : offset[1],
-      bottom: isPercent(offset[2]) ? (parseFloat(offset[2]) * rect.height) : offset[2],
-      left: isPercent(offset[3]) ? (parseFloat(offset[3]) * rect.width) : offset[3]
+    const offsetObject: any = {
+      top: isPercent(offset[0]) ? (parseFloat(offset[0]) * rect.height) / 100 : offset[0],
+      right: isPercent(offset[1]) ? (parseFloat(offset[1]) * rect.width) / 100 : offset[1],
+      bottom: isPercent(offset[2]) ? (parseFloat(offset[2]) * rect.height) / 100 : offset[2],
+      left: isPercent(offset[3]) ? (parseFloat(offset[3]) * rect.width) / 100 : offset[3]
     };
     return {
       top: rect.top - offsetObject.top,
@@ -42,11 +42,11 @@ export class PositionResolver {
   }
 
   static distance(containerRect: any, elementRect: any) {
-    let middlePointOfContainer: Point = {
+    const middlePointOfContainer: Point = {
       x: containerRect.height / 2,
       y: containerRect.width / 2
     };
-    let middlePointOfElement: Point = {
+    const middlePointOfElement: Point = {
       x: elementRect.top + (elementRect.height / 2),
       y: elementRect.left + (elementRect.width / 2)
     };

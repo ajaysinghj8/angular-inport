@@ -4,15 +4,15 @@ import { ScrollObservable } from './utils/scroll-observable';
 import { OffsetResolverFactory } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
-import { WindowRuler } from './utils/viewport-ruler';;
+import { WindowRuler } from './utils/viewport-ruler';
 
 @Directive({
   selector: '[in-view]'
 })
 export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   private _throttleType: string = 'debounce';
-  private _offset: Array<number> = [0, 0, 0, 0];
-  private _viewPortOffset: Array<number> = [0, 0, 0, 0];
+  private _offset: Array<number | string> = [0, 0, 0, 0];
+  private _viewPortOffset: Array<number | string> = [0, 0, 0, 0];
   private _throttle: number = 0;
   private _scrollElement: HTMLElement;
   private _lazy: boolean = false; // when visible only then.
@@ -21,11 +21,11 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   private _data: any;
 
   @Input()
-  set offset(offset: Array<number> | number) {
+  set offset(offset: Array<number | string> | number | string) {
     this._offset = OffsetResolverFactory.create(offset).normalizeOffset();
   }
   @Input()
-  set viewPortOffset(offset: Array<number> | number) {
+  set viewPortOffset(offset: Array<number | string> | number | string) {
     this._viewPortOffset = OffsetResolverFactory.create(offset).normalizeOffset();
   }
   @Input()
@@ -55,7 +55,7 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
     private _scrollObservable: ScrollObservable,
     private _element: ElementRef,
     private _zone: NgZone,
-    private _windowRuler: WindowRuler) { }
+    private _windowRuler: WindowRuler) {}
 
   ngAfterViewInit() {
     this._scrollerSubscription = this._scrollObservable.scrollObservableFor(this._scrollElement || window)
@@ -65,11 +65,11 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
       .subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
   }
 
-  private _getViewPortRuler () {
+  private _getViewPortRuler() {
     return this._scrollElement ? PositionResolver.getBoundingClientRect(this._scrollElement) : this._windowRuler.getWindowViewPortRuler();
   }
 
-  ngOnInit() { }
+  ngOnInit() {}
 
   ngOnDestroy() {
     if (this._scrollerSubscription) {
@@ -78,13 +78,17 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   }
 
   handleOnScroll(containersBounds: ElementBoundingPositions) {
-    let viewPortOffsetRect = PositionResolver.offsetRect(containersBounds, this._viewPortOffset);
-    let elementOffsetRect = PositionResolver.offsetRect(PositionResolver.getBoundingClientRect(this._element.nativeElement), this._offset);
-    let isVisible = PositionResolver.isVisible(this._element.nativeElement) && PositionResolver.intersectRect(elementOffsetRect, viewPortOffsetRect);
+    const viewPortOffsetRect = PositionResolver.offsetRect(containersBounds, this._viewPortOffset);
+    const elementOffsetRect = PositionResolver.offsetRect(
+      PositionResolver.getBoundingClientRect(this._element.nativeElement),
+      this._offset
+    );
+    const isVisible = PositionResolver.isVisible(this._element.nativeElement)
+      && PositionResolver.intersectRect(elementOffsetRect, viewPortOffsetRect);
 
     if (this._tooLazy && this._previous_state !== undefined && (this._previous_state === isVisible)) { return; }
 
-    let output: any = { status: isVisible };
+    const output: any = { status: isVisible };
 
     if (this._data !== undefined) { output.data = this._data; }
 
@@ -97,7 +101,7 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
 
     if (!isVisible) { this._previous_state = isVisible; return; }
 
-    let { isClipped, isOutsideView } = PositionResolver.clippedStatus(elementOffsetRect, viewPortOffsetRect);
+    const { isClipped, isOutsideView } = PositionResolver.clippedStatus(elementOffsetRect, viewPortOffsetRect);
     output.isClipped = isClipped;
     output.isOutsideView = isOutsideView;
     output.parts = PositionResolver.inViewParts(viewPortOffsetRect, elementOffsetRect);
