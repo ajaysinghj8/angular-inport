@@ -26,10 +26,10 @@ export class PositionResolver {
       return rect;
     }
     const offsetObject: any = {
-      top: isPercent(offset[0]) ? (parseFloat(offset[0]) * rect.height) / 100 : offset[0],
-      right: isPercent(offset[1]) ? (parseFloat(offset[1]) * rect.width) / 100 : offset[1],
-      bottom: isPercent(offset[2]) ? (parseFloat(offset[2]) * rect.height) / 100 : offset[2],
-      left: isPercent(offset[3]) ? (parseFloat(offset[3]) * rect.width) / 100 : offset[3]
+      top: isPercent(offset[0]) ? (parseFloat(offset[0]) * rect.height) / 100 : +offset[0],
+      right: isPercent(offset[1]) ? (parseFloat(offset[1]) * rect.width) / 100 : +offset[1],
+      bottom: isPercent(offset[2]) ? (parseFloat(offset[2]) * rect.height) / 100 : +offset[2],
+      left: isPercent(offset[3]) ? (parseFloat(offset[3]) * rect.width) / 100 : +offset[3]
     };
     return {
       top: rect.top - offsetObject.top,
