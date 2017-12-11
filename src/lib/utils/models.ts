@@ -1,13 +1,13 @@
-export type ElementBoundingPositions = {
+export interface ElementBoundingPositions {
   top: number;
   right: number;
   bottom: number;
   left: number;
-};
+}
 
 export type WindowElement = HTMLElement | Window;
 
-export type Point = {
+export interface Point {
   x: number;
   y: number;
 }
