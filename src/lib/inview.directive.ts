@@ -1,5 +1,6 @@
 import { Directive, Input, Output, OnInit, OnDestroy, EventEmitter, ElementRef, NgZone, AfterViewInit } from '@angular/core';
-import { Observable, Subscription } from 'rxjs/Rx';
+import { Observable } from 'rxjs/Observable';
+import { Subscription } from 'rxjs/Subscription';
 import { ScrollObservable } from './utils/scroll-observable';
 import { OffsetResolverFactory } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
