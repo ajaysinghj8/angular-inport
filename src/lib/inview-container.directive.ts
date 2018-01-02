@@ -2,7 +2,9 @@ import {
   Directive, ContentChildren, QueryList, OnInit, OnDestroy, AfterViewInit,
   Input, Output, EventEmitter, ElementRef, NgZone
 } from '@angular/core';
-import { Observable, Subscription } from 'rxjs/Rx';
+import { Observable } from 'rxjs/Observable';
+import { Subscription } from 'rxjs/Subscription';
+
 
 import { InviewItemDirective } from './inview-item.directive';
 import { ScrollObservable } from './utils/scroll-observable';
