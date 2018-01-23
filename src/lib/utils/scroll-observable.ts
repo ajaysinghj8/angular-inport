@@ -3,6 +3,7 @@ import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/fromEvent';
 import 'rxjs/add/observable/merge';
 import 'rxjs/add/operator/share';
+import 'rxjs/add/operator/map';
 import { WindowRuler } from './viewport-ruler';
 import { WindowElement } from './models';
 

@@ -12,6 +12,10 @@ import { WindowRuler } from './utils/viewport-ruler';
 import { OffsetResolverFactory } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
+
+import 'rxjs/add/observable/timer';
+import 'rxjs/add/observable/of';
+
 // allmost same configuration as child
 // child will not have inview property? to trigger changes
 // will use scroll on this or window
