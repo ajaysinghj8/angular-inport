@@ -7,6 +7,9 @@ import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
 import { WindowRuler } from './utils/viewport-ruler';
 
+import 'rxjs/add/observable/timer';
+import 'rxjs/add/observable/of';
+
 @Directive({
   selector: '[in-view]'
 })
