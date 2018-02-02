@@ -71,6 +71,31 @@ export class PositionResolver {
     };
   }
 
+  static inViewPercentage(containerRect: any, elementRect: any) {
+
+    const elementHeight = elementRect.bottom - elementRect.top;
+    const containerHeight = containerRect.bottom - containerRect.top;
+
+    const elementWidth = elementRect.right - elementRect.left;
+    const containerWidth = containerRect.right - containerRect.left;
+
+    const diffAbove = containerHeight - (elementRect.top - containerRect.top);
+    const diffBelow = containerHeight - (containerRect.bottom - elementRect.bottom);
+    const diffLeft = containerWidth - (elementRect.left - containerRect.left);
+    const diffRight = containerWidth - (containerRect.right - elementRect.right);
+
+    const verticalAbove = (diffAbove * 100) / elementHeight;
+    const verticalBelow = (diffBelow * 100) / elementHeight;
+
+    const horizontalLeft = (diffLeft * 100) / elementWidth;
+    const horizontalRight = (diffRight * 100) / elementWidth;
+
+    return {
+      vertical: Math.min(100, verticalAbove, verticalBelow),
+      horizontal: Math.min(100, horizontalLeft, horizontalRight)
+    };
+  }
+
   static isElementOutsideView(
     elementBounds: ElementBoundingPositions,
     containersBounds: ElementBoundingPositions): boolean {
@@ -100,4 +125,5 @@ export class PositionResolver {
       isOutsideView: this.isElementOutsideView(elementBounds, containersBounds)
     };
   }
+
 }
