@@ -2,9 +2,12 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/fromEvent';
 import 'rxjs/add/observable/merge';
+import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/share';
 import { WindowRuler } from './viewport-ruler';
 import { WindowElement } from './models';
+
+
 
 @Injectable()
 export class ScrollObservable {
