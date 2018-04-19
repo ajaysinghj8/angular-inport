@@ -3,8 +3,10 @@ import {
   Input, Output, EventEmitter, ElementRef, NgZone
 } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import { Subscription } from 'rxjs/Subscription';
+import { of as _of } from 'rxjs/observable/of';
 
+import { Subscription } from 'rxjs/Subscription';
+import { timer } from 'rxjs/observable/timer';
 
 import { InviewItemDirective } from './inview-item.directive';
 import { ScrollObservable } from './utils/scroll-observable';
@@ -12,6 +14,7 @@ import { WindowRuler } from './utils/viewport-ruler';
 import { OffsetResolverFactory } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
+import { filter, mergeMap, tap, debounce } from 'rxjs/operators';
 // allmost same configuration as child
 // child will not have inview property? to trigger changes
 // will use scroll on this or window
@@ -74,13 +77,21 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
 
   ngOnInit() { }
   ngAfterViewInit() {
-    this._scrollSuscription = this._scrollObservable.scrollObservableFor(this._scrollWindow ? window : this._element.nativeElement)
-    [this._throttleType](() => Observable.timer(this._throttle))
+    this._scrollSuscription =
+      this._scrollObservable.scrollObservableFor(this._scrollWindow ? window : this._element.nativeElement)
+        .pipe(
+          debounce(() => timer(this._throttle)),
+          filter(() => true),
+          mergeMap((event: any) => _of(this._getViewPortRuler())),
+          tap(() => this._checkScrollDirection())
+        ).subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
+    /*
+    [this._throttleType](() => timer(this._throttle))
       .filter(() => true)
       .mergeMap((event: any) => Observable.of(this._getViewPortRuler()))
       .do(() => this._checkScrollDirection())
       .subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
-
+    */
   }
 
   private _checkScrollDirection() {

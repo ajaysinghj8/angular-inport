@@ -41,7 +41,7 @@
     "prepublish": "npm run clean-build \n npm run build-npm"
   },
   "private": false,
-  "devDependencies": {
+  "dependencies": {
     "@angular/animations": "^5.2.9",
     "@angular/cli": "^1.7.4",
     "@angular/common": "^5.2.9",
@@ -67,10 +67,10 @@
     "karma-jasmine": "^1.1.1",
     "karma-jasmine-html-reporter": "^0.2.2",
     "protractor": "~5.3.1",
-    "rxjs": "^5.5.10",
+    "rxjs": "5.5.10",
     "ts-node": "~5.0.1",
     "tslint": "~5.9.1",
-    "typescript": "~2.8.1",
+    "typescript": "2.6.2",
     "zone.js": "^0.8.26"
   }
 }

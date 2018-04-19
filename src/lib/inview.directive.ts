@@ -1,11 +1,13 @@
 import { Directive, Input, Output, OnInit, OnDestroy, EventEmitter, ElementRef, NgZone, AfterViewInit } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
+import { of as _of } from 'rxjs/observable/of';
+import { timer } from 'rxjs/observable/timer';
 import { Subscription } from 'rxjs/Subscription';
 import { ScrollObservable } from './utils/scroll-observable';
 import { OffsetResolverFactory } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
 import { WindowRuler } from './utils/viewport-ruler';
+import { debounce, filter, mergeMap } from 'rxjs/operators';
 
 @Directive({
   selector: '[in-view]'
@@ -56,21 +58,28 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
     private _scrollObservable: ScrollObservable,
     private _element: ElementRef,
     private _zone: NgZone,
-    private _windowRuler: WindowRuler) {}
+    private _windowRuler: WindowRuler) { }
 
   ngAfterViewInit() {
     this._scrollerSubscription = this._scrollObservable.scrollObservableFor(this._scrollElement || window)
-    [this._throttleType](() => Observable.timer(this._throttle))
+      .pipe(
+        debounce(() => timer(this._throttle)),
+        filter(() => true),
+        mergeMap((event: any) => _of(this._getViewPortRuler()))
+      ).subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
+    /*
+    [this._throttleType](() => timer(this._throttle))
       .filter(() => true)
-      .mergeMap((event: any) => Observable.of(this._getViewPortRuler()))
+      .mergeMap((event: any) => _of(this._getViewPortRuler()))
       .subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
+      */
   }
 
   private _getViewPortRuler() {
     return this._scrollElement ? PositionResolver.getBoundingClientRect(this._scrollElement) : this._windowRuler.getWindowViewPortRuler();
   }
 
-  ngOnInit() {}
+  ngOnInit() { }
 
   ngOnDestroy() {
     if (this._scrollerSubscription) {

@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/fromEvent';
-import 'rxjs/add/observable/merge';
-import 'rxjs/add/operator/share';
+import { fromEvent } from 'rxjs/observable/fromEvent';
+import { merge } from 'rxjs/observable/merge';
+import { share } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { WindowRuler } from './viewport-ruler';
 import { WindowElement } from './models';
+import { Observable } from 'rxjs/Observable';
 
 @Injectable()
 export class ScrollObservable {
@@ -19,6 +21,15 @@ export class ScrollObservable {
     }
   }
   private _getGlobalObservable(): Observable<any> {
+    return merge(
+      fromEvent(window.document, 'scroll'),
+      fromEvent(window, 'resize')
+    ).pipe(
+      tap((event: any) => this._windowRuler.onChange()),
+      share()
+    );
+
+    /*
     return Observable.merge(
       Observable.fromEvent(window.document, 'scroll'),
       Observable.fromEvent(window, 'resize')
@@ -27,6 +38,7 @@ export class ScrollObservable {
         return event;
     })
     ).share();
+    */
   }
   scrollObservableFor(windowElement: WindowElement): Observable<any> {
     if (ScrollObservable.isWindow(windowElement)) {
@@ -40,7 +52,7 @@ export class ScrollObservable {
     return ref;
   }
   private _createElementObservable(windowElement: WindowElement): Observable<any> {
-    return Observable.fromEvent(windowElement, 'scroll').share();
+    return fromEvent(windowElement, 'scroll').pipe(share());
   }
 
 }
