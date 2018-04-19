@@ -118,7 +118,7 @@
       true,
       "attribute",
       "",
-      ""
+      "kebab-case"
     ],
     "component-selector": [
       true,
