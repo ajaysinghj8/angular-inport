@@ -1,6 +1,6 @@
 {
   "name": "angular-inport",
-  "version": "1.0.3",
+  "version": "1.0.9",
   "license": "MIT",
   "description": "Angular in view port for infinite scrolling or checking if the section is in the viewport.",
   "main": "dist/inview.module.js",
