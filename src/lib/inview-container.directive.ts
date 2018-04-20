@@ -12,11 +12,14 @@ import { OffsetResolverFactory } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
 
+
+import 'rxjs/add/operator/merge';
 import 'rxjs/add/operator/debounce';
 import 'rxjs/add/operator/mergeMap';
 import 'rxjs/add/operator/filter';
 import 'rxjs/add/operator/do';
 import 'rxjs/add/observable/of';
+import { Subject } from 'rxjs/Subject';
 
 
 // allmost same configuration as child
@@ -44,6 +47,7 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
   private _lastScrollY: number = 0;
   private _scrollDirection: string = 'down';
 
+  @Input() trigger: Subject<any>;
   @Input()
   set offset(offset: Array<number | string> | number | string) {
     this._offset = OffsetResolverFactory.create(offset).normalizeOffset();
@@ -81,7 +85,11 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
 
   ngOnInit() { }
   ngAfterViewInit() {
-    this._scrollSuscription = this._scrollObservable.scrollObservableFor(this._scrollWindow ? window : this._element.nativeElement)
+    const observable = this.trigger ?
+      Observable.merge(this._scrollObservable.scrollObservableFor(this._scrollWindow ? window : this._element.nativeElement), this.trigger)
+      : this._scrollObservable.scrollObservableFor(this._scrollWindow ? window : this._element.nativeElement);
+
+    this._scrollSuscription = observable
     [this._throttleType](() => Observable.timer(this._throttle))
       .filter(() => true)
       .mergeMap((event: any) => Observable.of(this._getViewPortRuler()))

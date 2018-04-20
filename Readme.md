@@ -45,6 +45,7 @@ import { NgInviewModule } from 'angular-inport';
           [viewPortOffset]="[top, right, bottom, left]" or "[top/bottom, left/right]" or "[top/bottom/left/right]"
           [throttle]="[Number in ms to limit the inview event]"
           [scrollELement]="parent element reference on which scrolling applied" 
+          [trigger]="An Observable ex. BehaviorSubject"
           >
           .......
 </div>
@@ -76,6 +77,7 @@ import { NgInviewModule } from 'angular-inport';
                     [viewPortOffset]="[top, right, bottom, left]" or "[top/bottom, left/right]" or "[top/bottom/left/right]"
                     [throttle]="[Number in ms to limit the inview event]"
                     [bestMatch]="when true, inview will return only one element closet to viewport center"
+                    [trigger]="An Observable ex. BehaviorSubject"
                     >
    <div in-view-item *ngFor="let item of items; let i = index;" [id]="index" [data]="item">
      .......

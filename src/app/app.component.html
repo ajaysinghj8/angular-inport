@@ -2,6 +2,7 @@
   <div id="menu-content">
     <h1> Individual </h1>
     <pre class="menu-json" [innerHtml]="stateIndividual | jsonbeauty"></pre>
+    <button (click)="triggerCustom()" >Trigger </button>
     <h1> Container </h1>
     <pre class="menu-json" [innerHtml]="stateContainer | jsonbeauty"></pre>
     <h1> Individual Wrapped </h1>
@@ -17,13 +18,13 @@
   <div id="container-content">
 
 
-    <div in-view (inview)="inViewIndividual($event)" class="box">
+    <div in-view (inview)="inViewIndividual($event)" class="box" [trigger]="trigger">
       Individual
     </div>
 
     <div class="separator"></div>
 
-    <div in-view-container (inview)="inViewContainer($event)">
+    <div in-view-container (inview)="inViewContainer($event)" [trigger]="trigger">
       <div in-view-item *ngFor="let item of items; let i = index;" [id]="index" [data]="item" class="box">
         {{ item.name }}
       </div>

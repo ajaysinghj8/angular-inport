@@ -1,4 +1,5 @@
-import {Component, ViewChild, OnInit} from '@angular/core';
+import { Component, ViewChild, OnInit } from '@angular/core';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 @Component({
   selector: 'app-root',
@@ -8,6 +9,7 @@ import {Component, ViewChild, OnInit} from '@angular/core';
 export class AppComponent implements OnInit {
   @ViewChild('individualwrapped') individualwrapped: any;
 
+  trigger: any = new BehaviorSubject(0);
   stateIndividual: any = {};
   stateContainer: any = {};
   stateIndividualWrapped: any = {};
@@ -24,7 +26,7 @@ export class AppComponent implements OnInit {
     }
   }
 
-  ngOnInit () {
+  ngOnInit() {
     this.elementIndividualWrapped = this.individualwrapped.nativeElement;
   }
 
@@ -46,6 +48,10 @@ export class AppComponent implements OnInit {
 
   inViewContainerBestWrapped($event) {
     this.stateContainerBestWrapped = $event;
+  }
+
+  triggerCustom() {
+    this.trigger.next(0);
   }
 
 }
