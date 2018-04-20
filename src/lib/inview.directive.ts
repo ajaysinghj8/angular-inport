@@ -7,6 +7,14 @@ import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
 import { WindowRuler } from './utils/viewport-ruler';
 
+import 'rxjs/add/operator/merge';
+import 'rxjs/add/operator/debounce';
+import 'rxjs/add/operator/mergeMap';
+import 'rxjs/add/observable/timer';
+import 'rxjs/add/observable/of';
+import 'rxjs/add/operator/filter';
+import { Subject } from 'rxjs/Subject';
+
 @Directive({
   selector: '[in-view]'
 })
@@ -20,6 +28,9 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   private _tooLazy: boolean = false; // when state changes only then.
   private _previous_state: boolean;
   private _data: any;
+
+  @Input()
+  trigger: Subject<any>;
 
   @Input()
   set offset(offset: Array<number | string> | number | string) {
@@ -56,10 +67,14 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
     private _scrollObservable: ScrollObservable,
     private _element: ElementRef,
     private _zone: NgZone,
-    private _windowRuler: WindowRuler) {}
+    private _windowRuler: WindowRuler) { }
 
   ngAfterViewInit() {
-    this._scrollerSubscription = this._scrollObservable.scrollObservableFor(this._scrollElement || window)
+    const observable = this.trigger ?
+      Observable.merge(this._scrollObservable.scrollObservableFor(this._scrollElement || window), this.trigger)
+      : this._scrollObservable.scrollObservableFor(this._scrollElement || window);
+
+    this._scrollerSubscription = observable
     [this._throttleType](() => Observable.timer(this._throttle))
       .filter(() => true)
       .mergeMap((event: any) => Observable.of(this._getViewPortRuler()))
@@ -70,7 +85,7 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
     return this._scrollElement ? PositionResolver.getBoundingClientRect(this._scrollElement) : this._windowRuler.getWindowViewPortRuler();
   }
 
-  ngOnInit() {}
+  ngOnInit() { }
 
   ngOnDestroy() {
     if (this._scrollerSubscription) {
@@ -97,6 +112,7 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
       output.isClipped = false;
       output.isOutsideView = true;
       output.parts = { top: false, right: false, left: false, bottom: false };
+      output.inViewPercentage = { vertical: 0, horizontal: 0 };
       this._zone.run(() => this.inview.emit(output));
     }
 
@@ -106,6 +122,7 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
     output.isClipped = isClipped;
     output.isOutsideView = isOutsideView;
     output.parts = PositionResolver.inViewParts(viewPortOffsetRect, elementOffsetRect);
+    output.inViewPercentage = PositionResolver.inViewPercentage(viewPortOffsetRect, elementOffsetRect);
     this._zone.run(() => this.inview.emit(output));
     this._previous_state = isVisible;
   }
