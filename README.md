@@ -1,38 +1,31 @@
 # Angular In Port / Angular In View Port
 
-## Inview Directive 
+## Installation
 
-npm install angular-inport
+- `npm i -S angular-inport`
+
+- `yarn add angular-inport`
 
 ## Importing module 
  
 ```js
 import { NgInviewModule } from 'angular-inport'; 
+
 @NgModule({                                   
     imports: [
-        ....,                                
+        // ...
         NgInviewModule                       
     ],
-    declarations: [YourAppComponent ],
+    declarations: [YourAppComponent],
     exports: [YourAppComponent],
     bootstrap: [YourAppComponent],
 })
-.....
-
-
 ```
-
-
-
 
 #### Basic Usages
 
 ```html
-
-<div in-view (inview)="inview($event)">
-</div>    
-
-
+<div in-view (inview)="inview($event)"></div>
 ```
 
 #### Advanced Usages
