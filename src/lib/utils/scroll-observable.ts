@@ -8,6 +8,8 @@ import { WindowRuler } from './viewport-ruler';
 import { WindowElement } from './models';
 import { Observable } from 'rxjs/Observable';
 
+
+
 @Injectable()
 export class ScrollObservable {
   static _globalObservable: Observable<any>;

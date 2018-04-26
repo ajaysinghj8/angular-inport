@@ -15,6 +15,9 @@ import { OffsetResolverFactory } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
 import { filter, mergeMap, tap, debounce } from 'rxjs/operators';
+import { Subject } from 'rxjs/Subject';
+
+
 // allmost same configuration as child
 // child will not have inview property? to trigger changes
 // will use scroll on this or window
@@ -40,6 +43,7 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
   private _lastScrollY: number = 0;
   private _scrollDirection: string = 'down';
 
+  @Input() trigger: Subject<any>;
   @Input()
   set offset(offset: Array<number | string> | number | string) {
     this._offset = OffsetResolverFactory.create(offset).normalizeOffset();
