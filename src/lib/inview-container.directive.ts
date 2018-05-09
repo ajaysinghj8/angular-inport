@@ -1,9 +1,17 @@
 import {
-  Directive, ContentChildren, QueryList, OnInit, OnDestroy, AfterViewInit,
-  Input, Output, EventEmitter, ElementRef, NgZone
+  Directive,
+  ContentChildren,
+  QueryList,
+  OnInit,
+  OnDestroy,
+  AfterViewInit,
+  Input,
+  Output,
+  EventEmitter,
+  ElementRef,
+  NgZone
 } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
-import { Subscription } from 'rxjs/Subscription';
+import { Observable, Subject, Subscription, merge, timer, of } from 'rxjs';
 
 import { InviewItemDirective } from './inview-item.directive';
 import { ScrollObservable } from './utils/scroll-observable';
@@ -11,16 +19,6 @@ import { WindowRuler } from './utils/viewport-ruler';
 import { OffsetResolverFactory } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
-
-
-import 'rxjs/add/operator/merge';
-import 'rxjs/add/operator/debounce';
-import 'rxjs/add/operator/mergeMap';
-import 'rxjs/add/operator/filter';
-import 'rxjs/add/operator/do';
-import 'rxjs/add/observable/of';
-import { Subject } from 'rxjs/Subject';
-
 
 // allmost same configuration as child
 // child will not have inview property? to trigger changes
@@ -35,7 +33,8 @@ import { Subject } from 'rxjs/Subject';
 @Directive({
   selector: '[in-view-container]'
 })
-export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewInit {
+export class InviewContainerDirective
+  implements OnInit, OnDestroy, AfterViewInit {
   private _scrollSuscription: Subscription;
   private _throttleType: string = 'debounce';
   private _offset: Array<number | string> = [0, 0, 0, 0];
@@ -54,7 +53,9 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
   }
   @Input()
   set viewPortOffset(offset: Array<number> | number | string) {
-    this._viewPortOffset = OffsetResolverFactory.create(offset).normalizeOffset();
+    this._viewPortOffset = OffsetResolverFactory.create(
+      offset
+    ).normalizeOffset();
   }
   @Input()
   set throttle(throttle: number) {
@@ -74,44 +75,58 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
   }
 
   @Output() inview: EventEmitter<any> = new EventEmitter();
-  @ContentChildren(InviewItemDirective) private _inviewChildren: QueryList<InviewItemDirective>;
+  @ContentChildren(InviewItemDirective)
+  private _inviewChildren: QueryList<InviewItemDirective>;
 
   constructor(
     private _element: ElementRef,
     private _scrollObservable: ScrollObservable,
     private _windowRuler: WindowRuler,
     private _zone: NgZone
-  ) { }
+  ) {}
 
-  ngOnInit() { }
+  ngOnInit() {}
   ngAfterViewInit() {
-    const observable = this.trigger ?
-      Observable.merge(this._scrollObservable.scrollObservableFor(this._scrollWindow ? window : this._element.nativeElement), this.trigger)
-      : this._scrollObservable.scrollObservableFor(this._scrollWindow ? window : this._element.nativeElement);
+    const observable = this.trigger
+      ? merge(
+          this._scrollObservable.scrollObservableFor(
+            this._scrollWindow ? window : this._element.nativeElement
+          ),
+          this.trigger
+        )
+      : this._scrollObservable.scrollObservableFor(
+          this._scrollWindow ? window : this._element.nativeElement
+        );
 
-    this._scrollSuscription = observable
-    [this._throttleType](() => Observable.timer(this._throttle))
+    this._scrollSuscription = observable[this._throttleType](() =>
+      timer(this._throttle)
+    )
       .filter(() => true)
-      .mergeMap((event: any) => Observable.of(this._getViewPortRuler()))
+      .mergeMap((event: any) => of(this._getViewPortRuler()))
       .do(() => this._checkScrollDirection())
-      .subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
-
+      .subscribe((containersBounds: ElementBoundingPositions) =>
+        this.handleOnScroll(containersBounds)
+      );
   }
 
   private _checkScrollDirection() {
     if (this._scrollWindow) {
-      this._scrollDirection = (window.scrollY > this._lastScrollY) ? 'down' : 'up';
+      this._scrollDirection =
+        window.scrollY > this._lastScrollY ? 'down' : 'up';
       this._lastScrollY = window.scrollY;
     } else {
-      this._scrollDirection = (this._element.nativeElement.scrollTop > this._lastScrollY) ? 'down' : 'up';
+      this._scrollDirection =
+        this._element.nativeElement.scrollTop > this._lastScrollY
+          ? 'down'
+          : 'up';
       this._lastScrollY = this._element.nativeElement.scrollTop;
     }
   }
 
   private _getViewPortRuler() {
-    return this._scrollWindow ?
-      this._windowRuler.getWindowViewPortRuler() :
-      PositionResolver.getBoundingClientRect(this._element.nativeElement);
+    return this._scrollWindow
+      ? this._windowRuler.getWindowViewPortRuler()
+      : PositionResolver.getBoundingClientRect(this._element.nativeElement);
   }
   ngOnDestroy() {
     if (this._scrollSuscription) {
@@ -123,43 +138,62 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
     // check of scroll up or down
     // Note:: check all children from parent if it is in view or not
     // for cache of less iterations start from the last visible  item then based on scroll up and down check list futher
-    const viewPortOffsetRect = PositionResolver.offsetRect(containersBounds, this._viewPortOffset);
+    const viewPortOffsetRect = PositionResolver.offsetRect(
+      containersBounds,
+      this._viewPortOffset
+    );
     let visibleChildren: Array<any> = [];
     if (this._inviewChildren) {
-      visibleChildren = this._inviewChildren.toArray().filter((child: InviewItemDirective) => {
-        const elementOffsetRect = PositionResolver.offsetRect(child.getELementRect(), this._offset);
-        return child.isVisible() && PositionResolver.intersectRect(elementOffsetRect, viewPortOffsetRect);
-      });
+      visibleChildren = this._inviewChildren
+        .toArray()
+        .filter((child: InviewItemDirective) => {
+          const elementOffsetRect = PositionResolver.offsetRect(
+            child.getELementRect(),
+            this._offset
+          );
+          return (
+            child.isVisible() &&
+            PositionResolver.intersectRect(
+              elementOffsetRect,
+              viewPortOffsetRect
+            )
+          );
+        });
       if (this._bestMatch) {
         let bestMatchChild: InviewItemDirective | any = 0;
         if (visibleChildren.length) {
-          visibleChildren.reduce((distance: number, currChild: InviewItemDirective) => {
-            const _distance = PositionResolver.distance(
-              viewPortOffsetRect,
-              PositionResolver.offsetRect(currChild.getELementRect(), this._offset)
-            );
-            if (distance > _distance) {
-              bestMatchChild = currChild;
-              return _distance;
-            }
-            return distance;
-          }, Infinity);
+          visibleChildren.reduce(
+            (distance: number, currChild: InviewItemDirective) => {
+              const _distance = PositionResolver.distance(
+                viewPortOffsetRect,
+                PositionResolver.offsetRect(
+                  currChild.getELementRect(),
+                  this._offset
+                )
+              );
+              if (distance > _distance) {
+                bestMatchChild = currChild;
+                return _distance;
+              }
+              return distance;
+            },
+            Infinity
+          );
         }
         const data: any = bestMatchChild ? bestMatchChild.getData() : {};
         data.direction = this._scrollDirection;
         this._zone.run(() => this.inview.emit(data));
       } else {
         const data: any = {};
-        data.inview = visibleChildren.map((vc: InviewItemDirective) => vc.getData());
+        data.inview = visibleChildren.map((vc: InviewItemDirective) =>
+          vc.getData()
+        );
         data.direction = this._scrollDirection;
         this._zone.run(() => this.inview.emit(data));
       }
-
     }
   }
-
 }
-
 
 //  inview-container -> inview-item ->
 
