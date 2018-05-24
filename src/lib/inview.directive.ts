@@ -1,21 +1,21 @@
-import { Directive, Input, Output, OnInit, OnDestroy, EventEmitter, ElementRef, NgZone, AfterViewInit } from '@angular/core';
-import { of as _of } from 'rxjs/observable/of';
-import { timer } from 'rxjs/observable/timer';
-import { Subscription } from 'rxjs/Subscription';
+import {
+  Directive,
+  Input,
+  Output,
+  OnInit,
+  OnDestroy,
+  EventEmitter,
+  ElementRef,
+  NgZone,
+  AfterViewInit
+} from '@angular/core';
+import { Observable, Subject, Subscription, merge, timer, of } from 'rxjs';
 import { ScrollObservable } from './utils/scroll-observable';
 import { OffsetResolverFactory } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
 import { WindowRuler } from './utils/viewport-ruler';
 import { debounce, filter, mergeMap } from 'rxjs/operators';
-
-import 'rxjs/add/operator/merge';
-import 'rxjs/add/operator/debounce';
-import 'rxjs/add/operator/mergeMap';
-import 'rxjs/add/observable/timer';
-import 'rxjs/add/observable/of';
-import 'rxjs/add/operator/filter';
-import { Subject } from 'rxjs/Subject';
 
 @Directive({
   selector: '[in-view]'
@@ -31,8 +31,7 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   private _previous_state: boolean;
   private _data: any;
 
-  @Input()
-  trigger: Subject<any>;
+  @Input() trigger: Subject<any>;
 
   @Input()
   set offset(offset: Array<number | string> | number | string) {
@@ -40,7 +39,9 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   }
   @Input()
   set viewPortOffset(offset: Array<number | string> | number | string) {
-    this._viewPortOffset = OffsetResolverFactory.create(offset).normalizeOffset();
+    this._viewPortOffset = OffsetResolverFactory.create(
+      offset
+    ).normalizeOffset();
   }
   @Input()
   set throttle(throttle: number) {
@@ -69,7 +70,8 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
     private _scrollObservable: ScrollObservable,
     private _element: ElementRef,
     private _zone: NgZone,
-    private _windowRuler: WindowRuler) { }
+    private _windowRuler: WindowRuler
+  ) {}
 
   ngAfterViewInit() {
     this._scrollerSubscription = this._scrollObservable.scrollObservableFor(this._scrollElement || window)
@@ -87,10 +89,12 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private _getViewPortRuler() {
-    return this._scrollElement ? PositionResolver.getBoundingClientRect(this._scrollElement) : this._windowRuler.getWindowViewPortRuler();
+    return this._scrollElement
+      ? PositionResolver.getBoundingClientRect(this._scrollElement)
+      : this._windowRuler.getWindowViewPortRuler();
   }
 
-  ngOnInit() { }
+  ngOnInit() {}
 
   ngOnDestroy() {
     if (this._scrollerSubscription) {
@@ -99,19 +103,31 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   }
 
   handleOnScroll(containersBounds: ElementBoundingPositions) {
-    const viewPortOffsetRect = PositionResolver.offsetRect(containersBounds, this._viewPortOffset);
+    const viewPortOffsetRect = PositionResolver.offsetRect(
+      containersBounds,
+      this._viewPortOffset
+    );
     const elementOffsetRect = PositionResolver.offsetRect(
       PositionResolver.getBoundingClientRect(this._element.nativeElement),
       this._offset
     );
-    const isVisible = PositionResolver.isVisible(this._element.nativeElement)
-      && PositionResolver.intersectRect(elementOffsetRect, viewPortOffsetRect);
+    const isVisible =
+      PositionResolver.isVisible(this._element.nativeElement) &&
+      PositionResolver.intersectRect(elementOffsetRect, viewPortOffsetRect);
 
-    if (this._tooLazy && this._previous_state !== undefined && (this._previous_state === isVisible)) { return; }
+    if (
+      this._tooLazy &&
+      this._previous_state !== undefined &&
+      this._previous_state === isVisible
+    ) {
+      return;
+    }
 
     const output: any = { status: isVisible };
 
-    if (this._data !== undefined) { output.data = this._data; }
+    if (this._data !== undefined) {
+      output.data = this._data;
+    }
 
     if (!this._lazy && !isVisible) {
       output.isClipped = false;
@@ -121,13 +137,25 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
       this._zone.run(() => this.inview.emit(output));
     }
 
-    if (!isVisible) { this._previous_state = isVisible; return; }
+    if (!isVisible) {
+      this._previous_state = isVisible;
+      return;
+    }
 
-    const { isClipped, isOutsideView } = PositionResolver.clippedStatus(elementOffsetRect, viewPortOffsetRect);
+    const { isClipped, isOutsideView } = PositionResolver.clippedStatus(
+      elementOffsetRect,
+      viewPortOffsetRect
+    );
     output.isClipped = isClipped;
     output.isOutsideView = isOutsideView;
-    output.parts = PositionResolver.inViewParts(viewPortOffsetRect, elementOffsetRect);
-    output.inViewPercentage = PositionResolver.inViewPercentage(viewPortOffsetRect, elementOffsetRect);
+    output.parts = PositionResolver.inViewParts(
+      viewPortOffsetRect,
+      elementOffsetRect
+    );
+    output.inViewPercentage = PositionResolver.inViewPercentage(
+      viewPortOffsetRect,
+      elementOffsetRect
+    );
     this._zone.run(() => this.inview.emit(output));
     this._previous_state = isVisible;
   }
