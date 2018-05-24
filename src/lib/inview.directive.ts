@@ -15,6 +15,7 @@ import { OffsetResolverFactory } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
 import { WindowRuler } from './utils/viewport-ruler';
+import { debounce, filter, mergeMap } from 'rxjs/operators';
 
 @Directive({
   selector: '[in-view]'
@@ -73,25 +74,18 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngAfterViewInit() {
-    const observable = this.trigger
-      ? merge(
-          this._scrollObservable.scrollObservableFor(
-            this._scrollElement || window
-          ),
-          this.trigger
-        )
-      : this._scrollObservable.scrollObservableFor(
-          this._scrollElement || window
-        );
-
-    this._scrollerSubscription = observable[this._throttleType](() =>
-      timer(this._throttle)
-    )
+    this._scrollerSubscription = this._scrollObservable.scrollObservableFor(this._scrollElement || window)
+      .pipe(
+        debounce(() => timer(this._throttle)),
+        filter(() => true),
+        mergeMap((event: any) => _of(this._getViewPortRuler()))
+      ).subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
+    /*
+    [this._throttleType](() => timer(this._throttle))
       .filter(() => true)
-      .mergeMap((event: any) => of(this._getViewPortRuler()))
-      .subscribe((containersBounds: ElementBoundingPositions) =>
-        this.handleOnScroll(containersBounds)
-      );
+      .mergeMap((event: any) => _of(this._getViewPortRuler()))
+      .subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
+      */
   }
 
   private _getViewPortRuler() {

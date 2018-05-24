@@ -19,6 +19,7 @@ import { WindowRuler } from './utils/viewport-ruler';
 import { OffsetResolverFactory } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
+import { filter, mergeMap, tap, debounce } from 'rxjs/operators';
 
 // allmost same configuration as child
 // child will not have inview property? to trigger changes
@@ -87,26 +88,21 @@ export class InviewContainerDirective
 
   ngOnInit() {}
   ngAfterViewInit() {
-    const observable = this.trigger
-      ? merge(
-          this._scrollObservable.scrollObservableFor(
-            this._scrollWindow ? window : this._element.nativeElement
-          ),
-          this.trigger
-        )
-      : this._scrollObservable.scrollObservableFor(
-          this._scrollWindow ? window : this._element.nativeElement
-        );
-
-    this._scrollSuscription = observable[this._throttleType](() =>
-      timer(this._throttle)
-    )
+    this._scrollSuscription =
+      this._scrollObservable.scrollObservableFor(this._scrollWindow ? window : this._element.nativeElement)
+        .pipe(
+          debounce(() => timer(this._throttle)),
+          filter(() => true),
+          mergeMap((event: any) => _of(this._getViewPortRuler())),
+          tap(() => this._checkScrollDirection())
+        ).subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
+    /*
+    [this._throttleType](() => timer(this._throttle))
       .filter(() => true)
       .mergeMap((event: any) => of(this._getViewPortRuler()))
       .do(() => this._checkScrollDirection())
-      .subscribe((containersBounds: ElementBoundingPositions) =>
-        this.handleOnScroll(containersBounds)
-      );
+      .subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
+    */
   }
 
   private _checkScrollDirection() {
