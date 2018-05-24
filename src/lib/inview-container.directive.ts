@@ -11,7 +11,7 @@ import {
   ElementRef,
   NgZone
 } from '@angular/core';
-import { Observable, Subject, Subscription, merge, timer, of } from 'rxjs';
+import { Observable, Subject, Subscription, merge, timer, of as _of } from 'rxjs';
 
 import { InviewItemDirective } from './inview-item.directive';
 import { ScrollObservable } from './utils/scroll-observable';

@@ -9,7 +9,7 @@ import {
   NgZone,
   AfterViewInit
 } from '@angular/core';
-import { Observable, Subject, Subscription, merge, timer, of } from 'rxjs';
+import { Observable, Subject, Subscription, merge, timer, of as _of } from 'rxjs';
 import { ScrollObservable } from './utils/scroll-observable';
 import { OffsetResolverFactory } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';

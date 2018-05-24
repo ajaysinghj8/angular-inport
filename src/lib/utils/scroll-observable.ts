@@ -3,7 +3,6 @@ import { Observable, merge, fromEvent } from 'rxjs';
 import { map, share, tap } from 'rxjs/operators';
 import { WindowRuler } from './viewport-ruler';
 import { WindowElement } from './models';
-import { Observable } from 'rxjs/Observable';
 
 @Injectable()
 export class ScrollObservable {
