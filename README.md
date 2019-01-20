@@ -78,3 +78,9 @@ import { NgInviewModule } from 'angular-inport';
 </div>
 
 ```
+### If not working checklist
+* In case of using in-view-container
+  Add Following attribute to the in-view-container 
+  ```html  
+    [scrollWindow]="false"
+  ```
