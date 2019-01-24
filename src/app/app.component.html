@@ -18,13 +18,13 @@
   <div id="container-content">
 
 
-    <div in-view (inview)="inViewIndividual($event)" class="box" [trigger]="trigger">
+    <div in-view (inview)="inViewIndividual($event)" class="box" [trigger]="trigger" [triggerOnInit]="true">
       Individual
     </div>
 
     <div class="separator"></div>
 
-    <div in-view-container (inview)="inViewContainer($event)" [trigger]="trigger">
+    <div in-view-container [triggerOnInit]="true" (inview)="inViewContainer($event)" [trigger]="trigger">
       <div in-view-item *ngFor="let item of items; let i = index;" [id]="index" [data]="item" class="box">
         {{ item.name }}
       </div>
@@ -35,7 +35,7 @@
 
     <div #individualwrapped class="boxes">
       <div class="boxes-content">
-        <div in-view (inview)="inViewIndividualWrapped($event)" [scrollELement]="elementIndividualWrapped" class="box">
+        <div in-view (inview)="inViewIndividualWrapped($event)" [scrollELement]="elementIndividualWrapped" [triggerOnInit]="true" class="box">
           Individual Wrapped
         </div>
       </div>
@@ -43,7 +43,7 @@
 
     <div class="separator"></div>
 
-    <div class="boxes" in-view-container (inview)="inViewContainerWrapped($event)" [scrollWindow]="false">
+    <div class="boxes" in-view-container [triggerOnInit]="true" (inview)="inViewContainerWrapped($event)" [scrollWindow]="false"  [triggerOnInit]="true">
       <div class="boxes-content">
         <div in-view-item *ngFor="let item of items; let i = index;" [id]="index" [data]="item" class="box">
           {{ item.name }}
@@ -53,7 +53,7 @@
 
     <div class="separator"></div>
 
-    <div class="boxes" in-view-container (inview)="inViewContainerBestWrapped($event)" [scrollWindow]="false" [bestMatch]="true">
+    <div class="boxes" in-view-container [triggerOnInit]="true" (inview)="inViewContainerBestWrapped($event)" [scrollWindow]="false" [bestMatch]="true">
       <div class="boxes-content">
         <div in-view-item *ngFor="let item of items; let i = index;" [id]="index" [data]="item" class="box">
           {{ item.name }}

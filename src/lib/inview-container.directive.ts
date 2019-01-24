@@ -48,9 +48,14 @@ export class InviewContainerDirective
   private _scrollDirection: string = 'down';
 
   @Input() trigger: Subject<any>;
+  _triggerOnInit: boolean;
   @Input()
   set offset(offset: Array<number | string> | number | string) {
     this._offset = OffsetResolverFactory.create(offset).normalizeOffset();
+  }
+  @Input() 
+  set triggerOnInit(triggerOnInit:boolean){
+    this._triggerOnInit = !!triggerOnInit
   }
   @Input()
   set viewPortOffset(offset: Array<number> | number | string) {
@@ -96,13 +101,7 @@ export class InviewContainerDirective
           mergeMap((event: any) => _of(this._getViewPortRuler())),
           tap(() => this._checkScrollDirection())
         ).subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
-    /*
-    [this._throttleType](() => timer(this._throttle))
-      .filter(() => true)
-      .mergeMap((event: any) => of(this._getViewPortRuler()))
-      .do(() => this._checkScrollDirection())
-      .subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
-    */
+        if(this._triggerOnInit) return this.handleOnScroll(this._getViewPortRuler())
   }
 
   private _checkScrollDirection() {
