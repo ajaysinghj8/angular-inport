@@ -16,7 +16,6 @@ import { PositionResolver } from './utils/position-resolver';
 import { ElementBoundingPositions } from './utils/models';
 import { WindowRuler } from './utils/viewport-ruler';
 import { debounce, filter, mergeMap } from 'rxjs/operators';
-
 @Directive({
   selector: '[in-view]'
 })
@@ -30,9 +29,14 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   private _tooLazy: boolean = false; // when state changes only then.
   private _previous_state: boolean;
   private _data: any;
+  private _triggerOnInit: boolean = false
 
   @Input() trigger: Subject<any>;
-
+  
+  @Input() 
+  set triggerOnInit(triggerOnInit:boolean){
+    this._triggerOnInit = !!triggerOnInit;
+  } 
   @Input()
   set offset(offset: Array<number | string> | number | string) {
     this._offset = OffsetResolverFactory.create(offset).normalizeOffset();
@@ -80,12 +84,7 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
         filter(() => true),
         mergeMap((event: any) => _of(this._getViewPortRuler()))
       ).subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
-    /*
-    [this._throttleType](() => timer(this._throttle))
-      .filter(() => true)
-      .mergeMap((event: any) => _of(this._getViewPortRuler()))
-      .subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
-      */
+     if(this._triggerOnInit) return this.handleOnScroll(this._getViewPortRuler())
   }
 
   private _getViewPortRuler() {
