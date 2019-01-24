@@ -78,7 +78,6 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngAfterViewInit() {
-    debugger;
     this._scrollerSubscription = this._scrollObservable.scrollObservableFor(this._scrollElement || window)
       .pipe(
         debounce(() => timer(this._throttle)),

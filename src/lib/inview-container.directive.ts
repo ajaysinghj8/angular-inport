@@ -46,9 +46,9 @@ export class InviewContainerDirective
   private _bestMatch: boolean;
   private _lastScrollY: number = 0;
   private _scrollDirection: string = 'down';
+  private _triggerOnInit: boolean;
 
   @Input() trigger: Subject<any>;
-  _triggerOnInit: boolean;
   @Input()
   set offset(offset: Array<number | string> | number | string) {
     this._offset = OffsetResolverFactory.create(offset).normalizeOffset();
