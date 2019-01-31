@@ -78,3 +78,25 @@ import { NgInviewModule } from 'angular-inport';
 </div>
 
 ```
+
+#### InView Props
+
+* `(inview)`: inview event, it will keep to emitting the event on scroll. 
+* `[offset]`: offset value can be provided as [top, right, bottom, left] or [top/bottom, left/right] or [top/bottom/left/right]
+* `[viewPortOffset]` : offset value from an element or window port.
+* `[trigger]`: An Observable ex. BehaviorSubject can be passed to trigger (inview) event.
+* `[scrollELement]`: element to check if the content is available in view port with in the element 's view port. default value is window.
+* `[data]`: data property can be used to identify the in-view event source, when you have multiple in-view directives in a page attached to same in-view handler.
+
+* `[lazy]`: default  false, set true when you want in-view event to trigger only on visibility of that content. will not trigger when content goes out of view port.
+* `[tooLazy]`: default false, set true when you want in-view event to trigger only when visibility state changes.
+* `[triggerOnInit]`: default false, set true when you want in-view event to get triggered on element load otherwise it will trigger only on scroll event.
+
+#### InViewContainer Props
+* `(inview)`: inview event, it will keep to emitting the event on scroll. 
+* `[offset]`: offset value can be provided as [top, right, bottom, left] or [top/bottom, left/right] or [top/bottom/left/right]
+* `[viewPortOffset]` : offset value from an element or window port.
+* `[scrollWindow]`: default true uses window scroll to check inview status, set false to check from container's scroll. 
+* `[bestMatch]` : will return only the centered element from other element. Please check example.
+* `[triggerOnInit]`: default false, set true when you want in-view event to get triggered on element load otherwise it will trigger only on scroll event.
+
