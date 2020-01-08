@@ -10,16 +10,23 @@ import {
   EventEmitter,
   ElementRef,
   NgZone
-} from '@angular/core';
-import { Observable, Subject, Subscription, merge, timer, of as _of } from 'rxjs';
+} from "@angular/core";
+import {
+  Observable,
+  Subject,
+  Subscription,
+  merge,
+  timer,
+  of as _of
+} from "rxjs";
 
-import { InviewItemDirective } from './inview-item.directive';
-import { ScrollObservable } from './utils/scroll-observable';
-import { WindowRuler } from './utils/viewport-ruler';
-import { OffsetResolverFactory } from './utils/offset-resolver';
-import { PositionResolver } from './utils/position-resolver';
-import { ElementBoundingPositions } from './utils/models';
-import { filter, mergeMap, tap, debounce } from 'rxjs/operators';
+import { InviewItemDirective } from "./inview-item.directive";
+import { ScrollObservable } from "./utils/scroll-observable";
+import { WindowRuler } from "./utils/viewport-ruler";
+import { OffsetResolverFactory } from "./utils/offset-resolver";
+import { PositionResolver } from "./utils/position-resolver";
+import { ElementBoundingPositions } from "./utils/models";
+import { filter, mergeMap, tap, debounce } from "rxjs/operators";
 
 // allmost same configuration as child
 // child will not have inview property? to trigger changes
@@ -32,12 +39,12 @@ import { filter, mergeMap, tap, debounce } from 'rxjs/operators';
 // then only the futher calculation should take place
 
 @Directive({
-  selector: '[in-view-container]'
+  selector: "[in-view-container]"
 })
 export class InviewContainerDirective
   implements OnInit, OnDestroy, AfterViewInit {
   private _scrollSuscription: Subscription;
-  private _throttleType: string = 'debounce';
+  private _throttleType: string = "debounce";
   private _offset: Array<number | string> = [0, 0, 0, 0];
   private _viewPortOffset: Array<number | string> = [0, 0, 0, 0];
   private _throttle: number = 0;
@@ -45,7 +52,7 @@ export class InviewContainerDirective
   private _data: any;
   private _bestMatch: boolean;
   private _lastScrollY: number = 0;
-  private _scrollDirection: string = 'down';
+  private _scrollDirection: string = "down";
   private _triggerOnInit: boolean;
 
   @Input() trigger: Subject<any>;
@@ -53,9 +60,9 @@ export class InviewContainerDirective
   set offset(offset: Array<number | string> | number | string) {
     this._offset = OffsetResolverFactory.create(offset).normalizeOffset();
   }
-  @Input() 
-  set triggerOnInit(triggerOnInit:boolean){
-    this._triggerOnInit = !!triggerOnInit
+  @Input()
+  set triggerOnInit(triggerOnInit: boolean) {
+    this._triggerOnInit = !!triggerOnInit;
   }
   @Input()
   set viewPortOffset(offset: Array<number> | number | string) {
@@ -93,27 +100,33 @@ export class InviewContainerDirective
 
   ngOnInit() {}
   ngAfterViewInit() {
-    this._scrollSuscription =
-      this._scrollObservable.scrollObservableFor(this._scrollWindow ? window : this._element.nativeElement)
-        .pipe(
-          debounce(() => timer(this._throttle)),
-          filter(() => true),
-          mergeMap((event: any) => _of(this._getViewPortRuler())),
-          tap(() => this._checkScrollDirection())
-        ).subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
-        if(this._triggerOnInit) return this.handleOnScroll(this._getViewPortRuler())
+    this._scrollSuscription = this._scrollObservable
+      .scrollObservableFor(
+        this._scrollWindow ? window : this._element.nativeElement
+      )
+      .pipe(
+        debounce(() => timer(this._throttle)),
+        filter(() => true),
+        mergeMap((event: any) => _of(this._getViewPortRuler())),
+        tap(() => this._checkScrollDirection())
+      )
+      .subscribe((containersBounds: ElementBoundingPositions) =>
+        this.handleOnScroll(containersBounds)
+      );
+    if (this._triggerOnInit)
+      return this.handleOnScroll(this._getViewPortRuler());
   }
 
   private _checkScrollDirection() {
     if (this._scrollWindow) {
       this._scrollDirection =
-        window.scrollY > this._lastScrollY ? 'down' : 'up';
+        window.scrollY > this._lastScrollY ? "down" : "up";
       this._lastScrollY = window.scrollY;
     } else {
       this._scrollDirection =
         this._element.nativeElement.scrollTop > this._lastScrollY
-          ? 'down'
-          : 'up';
+          ? "down"
+          : "up";
       this._lastScrollY = this._element.nativeElement.scrollTop;
     }
   }

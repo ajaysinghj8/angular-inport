@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
-import { Observable, merge, fromEvent } from 'rxjs';
-import { map, share, tap } from 'rxjs/operators';
-import { WindowRuler } from './viewport-ruler';
-import { WindowElement } from './models';
+import { Injectable } from "@angular/core";
+import { Observable, merge, fromEvent } from "rxjs";
+import { map, share, tap } from "rxjs/operators";
+import { WindowRuler } from "./viewport-ruler";
+import { WindowElement } from "./models";
 
 @Injectable()
 export class ScrollObservable {
@@ -12,7 +12,7 @@ export class ScrollObservable {
     Observable<any>
   > = new Map();
   static isWindow(windowElement: WindowElement) {
-    return Object.prototype.toString.call(windowElement).includes('Window');
+    return Object.prototype.toString.call(windowElement).includes("Window");
   }
   constructor(private _windowRuler: WindowRuler) {
     if (!ScrollObservable._globalObservable) {
@@ -21,8 +21,8 @@ export class ScrollObservable {
   }
   private _getGlobalObservable(): Observable<any> {
     return merge(
-      fromEvent(window.document, 'scroll'),
-      fromEvent(window, 'resize')
+      fromEvent(window.document, "scroll"),
+      fromEvent(window, "resize")
     ).pipe(
       tap((event: any) => this._windowRuler.onChange()),
       share()
@@ -44,15 +44,17 @@ export class ScrollObservable {
       return ScrollObservable._globalObservable;
     }
     if (ScrollObservable._elementObservableReferences.has(windowElement)) {
-      return <Observable<any>>ScrollObservable._elementObservableReferences.get(
-        windowElement
+      return <Observable<any>>(
+        ScrollObservable._elementObservableReferences.get(windowElement)
       );
     }
     const ref = this._createElementObservable(windowElement);
     ScrollObservable._elementObservableReferences.set(windowElement, ref);
     return ref;
   }
-  private _createElementObservable(windowElement: WindowElement): Observable<any> {
-    return fromEvent(windowElement, 'scroll').pipe(share());
+  private _createElementObservable(
+    windowElement: WindowElement
+  ): Observable<any> {
+    return fromEvent(windowElement, "scroll").pipe(share());
   }
 }
