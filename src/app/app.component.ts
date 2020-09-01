@@ -1,33 +1,35 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Component, ViewChild, OnInit } from "@angular/core";
+import { BehaviorSubject } from "rxjs";
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  selector: "app-root",
+  templateUrl: "./app.component.html",
+  styleUrls: ["./app.component.css"]
 })
 export class AppComponent implements OnInit {
-  @ViewChild('individualwrapped') individualwrapped: any;
+  @ViewChild("individualwrapped", { static: true }) individualwrapped: any;
 
   trigger: any = new BehaviorSubject(0);
   stateIndividual: any = {};
   stateContainer: any = {};
   stateIndividualWrapped: any = {};
-  elementIndividualWrapped = '';
+  elementIndividualWrapped = "";
   stateContainerWrapped: any = {};
   stateContainerBestWrapped: any = {};
   items = [];
+  ready = false;
 
   constructor() {
     for (let i = 0; i < 10; i++) {
       this.items.push({
-        name: 'Item ' + i
+        name: "Item " + i
       });
     }
   }
 
   ngOnInit() {
     this.elementIndividualWrapped = this.individualwrapped.nativeElement;
+    setTimeout(() => (this.ready = true));
   }
 
   inViewIndividualWrapped($event) {
@@ -53,5 +55,4 @@ export class AppComponent implements OnInit {
   triggerCustom() {
     this.trigger.next(0);
   }
-
 }

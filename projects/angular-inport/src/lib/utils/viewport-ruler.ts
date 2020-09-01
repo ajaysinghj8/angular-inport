@@ -1,6 +1,4 @@
-import { Injectable } from '@angular/core';
-
-
+import { Injectable } from "@angular/core";
 
 export class WindowRulerStatic {
   private static _windowRect: ClientRect;
@@ -13,7 +11,7 @@ export class WindowRulerStatic {
       bottom: height,
       right: width,
       height,
-      width,
+      width
     };
   }
   static onChange() {
@@ -36,9 +34,3 @@ export class WindowRuler {
     return WindowRulerStatic.getWindowViewPortRuler();
   }
 }
-
-
-
-
-
-

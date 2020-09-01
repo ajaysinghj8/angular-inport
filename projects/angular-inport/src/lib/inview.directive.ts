@@ -8,19 +8,26 @@ import {
   ElementRef,
   NgZone,
   AfterViewInit
-} from '@angular/core';
-import { Observable, Subject, Subscription, merge, timer, of as _of } from 'rxjs';
-import { ScrollObservable } from './utils/scroll-observable';
-import { OffsetResolverFactory } from './utils/offset-resolver';
-import { PositionResolver } from './utils/position-resolver';
-import { ElementBoundingPositions } from './utils/models';
-import { WindowRuler } from './utils/viewport-ruler';
-import { debounce, filter, mergeMap } from 'rxjs/operators';
+} from "@angular/core";
+import {
+  Observable,
+  Subject,
+  Subscription,
+  merge,
+  timer,
+  of as _of
+} from "rxjs";
+import { ScrollObservable } from "./utils/scroll-observable";
+import { OffsetResolverFactory } from "./utils/offset-resolver";
+import { PositionResolver } from "./utils/position-resolver";
+import { ElementBoundingPositions } from "./utils/models";
+import { WindowRuler } from "./utils/viewport-ruler";
+import { debounce, filter, mergeMap } from "rxjs/operators";
 @Directive({
-  selector: '[in-view]'
+  selector: "[in-view]"
 })
 export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
-  private _throttleType: string = 'debounce';
+  private _throttleType: string = "debounce";
   private _offset: Array<number | string> = [0, 0, 0, 0];
   private _viewPortOffset: Array<number | string> = [0, 0, 0, 0];
   private _throttle: number = 0;
@@ -29,14 +36,14 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   private _tooLazy: boolean = false; // when state changes only then.
   private _previous_state: boolean;
   private _data: any;
-  private _triggerOnInit: boolean = false
+  private _triggerOnInit: boolean = false;
 
   @Input() trigger: Subject<any>;
-  
-  @Input() 
-  set triggerOnInit(triggerOnInit:boolean){
+
+  @Input()
+  set triggerOnInit(triggerOnInit: boolean) {
     this._triggerOnInit = !!triggerOnInit;
-  } 
+  }
   @Input()
   set offset(offset: Array<number | string> | number | string) {
     this._offset = OffsetResolverFactory.create(offset).normalizeOffset();
@@ -78,13 +85,18 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
   ) {}
 
   ngAfterViewInit() {
-    this._scrollerSubscription = this._scrollObservable.scrollObservableFor(this._scrollElement || window)
+    this._scrollerSubscription = this._scrollObservable
+      .scrollObservableFor(this._scrollElement || window)
       .pipe(
         debounce(() => timer(this._throttle)),
         filter(() => true),
         mergeMap((event: any) => _of(this._getViewPortRuler()))
-      ).subscribe((containersBounds: ElementBoundingPositions) => this.handleOnScroll(containersBounds));
-     if(this._triggerOnInit) return this.handleOnScroll(this._getViewPortRuler())
+      )
+      .subscribe((containersBounds: ElementBoundingPositions) =>
+        this.handleOnScroll(containersBounds)
+      );
+    if (this._triggerOnInit)
+      return this.handleOnScroll(this._getViewPortRuler());
   }
 
   private _getViewPortRuler() {
