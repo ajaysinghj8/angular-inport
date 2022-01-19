@@ -3,72 +3,109 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
+    "angular-inport": {
+      "projectType": "library",
+      "root": "projects/angular-inport",
+      "sourceRoot": "projects/angular-inport/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:ng-packagr",
+          "options": {
+            "project": "projects/angular-inport/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/angular-inport/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/angular-inport/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/angular-inport/src/test.ts",
+            "tsConfig": "projects/angular-inport/tsconfig.spec.json",
+            "karmaConfig": "projects/angular-inport/karma.conf.js"
+          }
+        }
+      }
+    },
     "angular-inport-example": {
       "projectType": "application",
-      "schematics": {},
-      "root": "",
-      "sourceRoot": "src",
+      "schematics": {
+        "@schematics/angular:application": {
+          "strict": true
+        }
+      },
+      "root": "projects/angular-inport-example",
+      "sourceRoot": "projects/angular-inport-example/src",
       "prefix": "app",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "outputPath": "dist/angular-inport-example",
-            "index": "src/index.html",
-            "main": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "tsconfig.app.json",
-            "aot": true,
+            "index": "projects/angular-inport-example/src/index.html",
+            "main": "projects/angular-inport-example/src/main.ts",
+            "polyfills": "projects/angular-inport-example/src/polyfills.ts",
+            "tsConfig": "projects/angular-inport-example/tsconfig.app.json",
             "assets": [
-              "src/favicon.ico",
-              "src/assets"
+              "projects/angular-inport-example/src/favicon.ico",
+              "projects/angular-inport-example/src/assets"
             ],
             "styles": [
-              "src/styles.css"
+              "projects/angular-inport-example/src/styles.css"
             ],
             "scripts": []
           },
           "configurations": {
             "production": {
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
-                }
-              ],
-              "optimization": true,
-              "outputHashing": "all",
-              "sourceMap": false,
-              "extractCss": true,
-              "namedChunks": false,
-              "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true,
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "5mb"
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "6kb",
-                  "maximumError": "10kb"
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
                 }
-              ]
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "projects/angular-inport-example/src/environments/environment.ts",
+                  "with": "projects/angular-inport-example/src/environments/environment.prod.ts"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
             }
-          }
+          },
+          "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
-          "options": {
-            "browserTarget": "angular-inport-example:build"
-          },
           "configurations": {
             "production": {
               "browserTarget": "angular-inport-example:build:production"
+            },
+            "development": {
+              "browserTarget": "angular-inport-example:build:development"
             }
-          }
+          },
+          "defaultConfiguration": "development"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
@@ -79,90 +116,22 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "tsconfig.spec.json",
-            "karmaConfig": "karma.conf.js",
+            "main": "projects/angular-inport-example/src/test.ts",
+            "polyfills": "projects/angular-inport-example/src/polyfills.ts",
+            "tsConfig": "projects/angular-inport-example/tsconfig.spec.json",
+            "karmaConfig": "projects/angular-inport-example/karma.conf.js",
             "assets": [
-              "src/favicon.ico",
-              "src/assets"
+              "projects/angular-inport-example/src/favicon.ico",
+              "projects/angular-inport-example/src/assets"
             ],
             "styles": [
-              "src/styles.css"
+              "projects/angular-inport-example/src/styles.css"
             ],
             "scripts": []
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "tsconfig.app.json",
-              "tsconfig.spec.json",
-              "e2e/tsconfig.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
-          }
-        },
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
-          "options": {
-            "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "angular-inport-example:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "angular-inport-example:serve:production"
-            }
-          }
-        }
-      }
-    },
-    "angular-inport": {
-      "projectType": "library",
-      "root": "projects/angular-inport",
-      "sourceRoot": "projects/angular-inport/src",
-      "prefix": "lib",
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-ng-packagr:build",
-          "options": {
-            "tsConfig": "projects/angular-inport/tsconfig.lib.json",
-            "project": "projects/angular-inport/ng-package.json"
-          },
-          "configurations": {
-            "production": {
-              "tsConfig": "projects/angular-inport/tsconfig.lib.prod.json"
-            }
-          }
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "projects/angular-inport/src/test.ts",
-            "tsConfig": "projects/angular-inport/tsconfig.spec.json",
-            "karmaConfig": "projects/angular-inport/karma.conf.js"
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "projects/angular-inport/tsconfig.lib.json",
-              "projects/angular-inport/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
           }
         }
       }
     }
   },
-  "defaultProject": "angular-inport-example",
-  "cli": {
-    "analytics": false
-  }
+  "defaultProject": "angular-inport"
 }
