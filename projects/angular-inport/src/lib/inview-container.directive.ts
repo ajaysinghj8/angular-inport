@@ -148,19 +148,6 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
 			return;
 		}
 
-		// let bestMatchChild: InviewItemDirective;
-		// if (visibleChildren.length) {
-		// 	visibleChildren.reduce((distance: number, [child, rect]: IChildWithReact) => {
-		// 		const _distance = ;
-		// 		if (distance > _distance) {
-		// 			bestMatchChild = child;
-		// 			return _distance;
-		// 		}
-		// 		console.log('distance', distance);
-		// 		return distance;
-		// 	}, Infinity);
-		// }
-		console.log(visibleChildren);
 		const bestMatch = visibleChildren.sort(([, , distanceA], [, , distanceB]) => {
 			if (distanceA > distanceB) return 1;
 			else if (distanceA < distanceB) return -1;
