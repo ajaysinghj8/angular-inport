@@ -53,15 +53,6 @@ export class PositionResolver {
 		return distance(middlePointOfContainer, middlePointOfElement);
 	}
 
-	static inviewPercentage(containerRect: ElementClientRect, elementRect: ElementClientRect) {
-		return {
-			top: (100 * elementRect.top) / containerRect.top,
-			left: (100 * elementRect.left) / containerRect.left,
-			bottom: (100 * elementRect.bottom) / containerRect.bottom,
-			right: (100 * elementRect.right) / containerRect.right,
-		};
-	}
-
 	static inViewParts(containerRect: ElementClientRect, elementRect: ElementClientRect) {
 		return {
 			top: elementRect.top >= containerRect.top,
@@ -114,9 +105,9 @@ export class PositionResolver {
 		const clippedBelow = elementBounds.bottom > containersBounds.bottom;
 		const clippedLeft = elementBounds.left < containersBounds.left;
 		const clippedRight = elementBounds.right > containersBounds.right;
-
 		return clippedAbove || clippedBelow || clippedLeft || clippedRight;
 	}
+
 	static clippedStatus(elementBounds: ElementBoundingPositions, containersBounds: ElementBoundingPositions) {
 		return {
 			isClipped: this.isElementClipped(elementBounds, containersBounds),

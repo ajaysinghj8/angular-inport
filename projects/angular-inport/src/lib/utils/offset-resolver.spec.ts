@@ -1,4 +1,4 @@
-import { OffsetResolver, OffsetResolverFactory } from './offset-resolver';
+import { OffsetResolver } from './offset-resolver';
 
 describe('OffsetResolver', () => {
   describe('normalizeOffset', () => {
@@ -29,9 +29,9 @@ describe('OffsetResolver', () => {
   });
 });
 
-describe('OffsetResolverFactory', () => {
-  it('should create an OffsetResolver instance', () => {
-    const resolver = OffsetResolverFactory.create(10);
+describe('OffsetResolver.create', () => {
+  it('should create an OffsetResolver instance via static create()', () => {
+    const resolver = OffsetResolver.create(10);
     expect(resolver).toBeInstanceOf(OffsetResolver);
     expect(resolver.normalizeOffset()).toEqual([10, 10, 10, 10]);
   });

@@ -1,13 +1,15 @@
-import { Directive, OnInit, ElementRef, Input } from '@angular/core';
+import { Directive, ElementRef, Input } from '@angular/core';
 import { ElementClientRect } from './utils/models';
 import { PositionResolver } from './utils/position-resolver';
+
 @Directive({
-    selector: '[in-view-item]',
-    standalone: false
+	selector: '[in-view-item]',
+	standalone: false,
 })
-export class InviewItemDirective implements OnInit {
+export class InviewItemDirective {
 	private _data: any;
 	private _id: any;
+
 	@Input()
 	set data(d: any) {
 		this._data = d;
@@ -16,10 +18,9 @@ export class InviewItemDirective implements OnInit {
 	set id(_id: any) {
 		this._id = _id;
 	}
-	constructor(private _element: ElementRef) {}
-	ngOnInit() {}
 
-	// expose a function returning rect of this _element
+	constructor(private _element: ElementRef) {}
+
 	getELementRect(): ElementClientRect {
 		return PositionResolver.getBoundingClientRect(this._element.nativeElement);
 	}

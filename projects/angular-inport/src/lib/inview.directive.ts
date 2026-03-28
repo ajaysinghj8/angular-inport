@@ -2,37 +2,34 @@ import {
 	Directive,
 	Input,
 	Output,
-	OnInit,
 	OnDestroy,
 	EventEmitter,
 	ElementRef,
 	NgZone,
 	AfterViewInit,
 } from '@angular/core';
-import { Observable, Subject, Subscription, merge, timer, of as _of } from 'rxjs';
+import { Subscription, timer, of as _of } from 'rxjs';
 import { ScrollObservable } from './utils/scroll-observable';
-import { OffsetResolverFactory } from './utils/offset-resolver';
+import { OffsetResolver } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementClientRect } from './utils/models';
 import { WindowRuler } from './utils/viewport-ruler';
-import { debounce, filter, mergeMap } from 'rxjs/operators';
+import { debounce, map } from 'rxjs/operators';
+
 @Directive({
-    selector: '[in-view]',
-    standalone: false
+	selector: '[in-view]',
+	standalone: false,
 })
-export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
-	private _throttleType: string = 'debounce';
+export class InviewDirective implements OnDestroy, AfterViewInit {
 	private _offset: Array<number | string> = [0, 0, 0, 0];
 	private _viewPortOffset: Array<number | string> = [0, 0, 0, 0];
 	private _throttle: number = 0;
 	private _scrollElement!: HTMLElement;
-	private _lazy: boolean = false; // when visible only then.
-	private _tooLazy: boolean = false; // when state changes only then.
-	private _previous_state!: boolean;
+	private _lazy: boolean = false;
+	private _tooLazy: boolean = false;
+	private _previousState!: boolean;
 	private _data: any;
 	private _triggerOnInit: boolean = false;
-
-	@Input() trigger!: Subject<any>;
 
 	@Input()
 	set triggerOnInit(triggerOnInit: boolean) {
@@ -40,11 +37,11 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
 	}
 	@Input()
 	set offset(offset: Array<number | string> | number | string) {
-		this._offset = OffsetResolverFactory.create(offset).normalizeOffset();
+		this._offset = OffsetResolver.create(offset).normalizeOffset();
 	}
 	@Input()
 	set viewPortOffset(offset: Array<number | string> | number | string) {
-		this._viewPortOffset = OffsetResolverFactory.create(offset).normalizeOffset();
+		this._viewPortOffset = OffsetResolver.create(offset).normalizeOffset();
 	}
 	@Input()
 	set throttle(throttle: number) {
@@ -66,6 +63,7 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
 	set data(_d: any) {
 		this._data = _d;
 	}
+
 	@Output() private inview: EventEmitter<any> = new EventEmitter();
 	private _scrollerSubscription!: Subscription;
 
@@ -81,8 +79,7 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
 			.scrollObservableFor(this._scrollElement || window)
 			.pipe(
 				debounce(() => timer(this._throttle)),
-				filter(() => true),
-				mergeMap((event: any) => _of(this._getViewPortRuler())),
+				map(() => this._getViewPortRuler()),
 			)
 			.subscribe((containersBounds: ElementClientRect) => this.handleOnScroll(containersBounds));
 		if (this._triggerOnInit) return this.handleOnScroll(this._getViewPortRuler());
@@ -93,8 +90,6 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
 			? PositionResolver.getBoundingClientRect(this._scrollElement)
 			: this._windowRuler.getWindowViewPortRuler();
 	}
-
-	ngOnInit() {}
 
 	ngOnDestroy() {
 		if (this._scrollerSubscription) {
@@ -112,7 +107,7 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
 			PositionResolver.isVisible(this._element.nativeElement) &&
 			PositionResolver.intersectRect(elementOffsetRect, viewPortOffsetRect);
 
-		if (this._tooLazy && this._previous_state !== undefined && this._previous_state === isVisible) {
+		if (this._tooLazy && this._previousState !== undefined && this._previousState === isVisible) {
 			return;
 		}
 
@@ -131,7 +126,7 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
 		}
 
 		if (!isVisible) {
-			this._previous_state = isVisible;
+			this._previousState = isVisible;
 			return;
 		}
 
@@ -141,6 +136,6 @@ export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
 		output.parts = PositionResolver.inViewParts(viewPortOffsetRect, elementOffsetRect);
 		output.inViewPercentage = PositionResolver.inViewPercentage(viewPortOffsetRect, elementOffsetRect);
 		this._zone.run(() => this.inview.emit(output));
-		this._previous_state = isVisible;
+		this._previousState = isVisible;
 	}
 }
