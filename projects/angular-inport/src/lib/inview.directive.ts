@@ -17,7 +17,8 @@ import { ElementClientRect } from './utils/models';
 import { WindowRuler } from './utils/viewport-ruler';
 import { debounce, filter, mergeMap } from 'rxjs/operators';
 @Directive({
-	selector: '[in-view]',
+    selector: '[in-view]',
+    standalone: false
 })
 export class InviewDirective implements OnInit, OnDestroy, AfterViewInit {
 	private _throttleType: string = 'debounce';

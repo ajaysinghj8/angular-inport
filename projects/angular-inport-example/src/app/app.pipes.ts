@@ -1,7 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-	name: 'jsonbeauty',
+    name: 'jsonbeauty',
+    standalone: false
 })
 export class JsonBeautyPipe implements PipeTransform {
 	transform(json: string): string {

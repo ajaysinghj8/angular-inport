@@ -25,7 +25,7 @@ const IN_VIEW_RECT: ElementClientRect = { top: 100, left: 100, bottom: 300, righ
 const OUT_OF_VIEW_RECT: ElementClientRect = { top: 900, left: 0, bottom: 1100, right: 200, height: 200, width: 200 };
 
 @Component({
-  template: `
+    template: `
     <div in-view
          [lazy]="lazy"
          [tooLazy]="tooLazy"
@@ -33,6 +33,7 @@ const OUT_OF_VIEW_RECT: ElementClientRect = { top: 900, left: 0, bottom: 1100, r
          (inview)="onInview($event)">
     </div>
   `,
+    standalone: false
 })
 class TestHostComponent {
   lazy = false;

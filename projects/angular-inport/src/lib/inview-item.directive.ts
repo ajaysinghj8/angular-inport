@@ -2,7 +2,8 @@ import { Directive, OnInit, ElementRef, Input } from '@angular/core';
 import { ElementClientRect } from './utils/models';
 import { PositionResolver } from './utils/position-resolver';
 @Directive({
-	selector: '[in-view-item]',
+    selector: '[in-view-item]',
+    standalone: false
 })
 export class InviewItemDirective implements OnInit {
 	private _data: any;

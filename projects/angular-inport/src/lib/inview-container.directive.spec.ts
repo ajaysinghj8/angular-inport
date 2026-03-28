@@ -24,12 +24,13 @@ class MockWindowRuler {
 const VIEWPORT: ElementClientRect = { top: 0, left: 0, bottom: 768, right: 1024, height: 768, width: 1024 };
 
 @Component({
-  template: `
+    template: `
     <div in-view-container [bestMatch]="bestMatch" (inview)="onInview($event)">
       <div in-view-item id="item1" [data]="'data1'"></div>
       <div in-view-item id="item2" [data]="'data2'"></div>
     </div>
   `,
+    standalone: false
 })
 class TestHostComponent {
   bestMatch = false;
@@ -40,7 +41,8 @@ class TestHostComponent {
 }
 
 @Component({
-  template: `<div in-view-container (inview)="onInview($event)"></div>`,
+    template: `<div in-view-container (inview)="onInview($event)"></div>`,
+    standalone: false
 })
 class EmptyContainerHostComponent {
   lastEvent: any;

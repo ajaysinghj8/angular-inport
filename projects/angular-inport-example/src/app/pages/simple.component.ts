@@ -3,9 +3,10 @@ import { BehaviorSubject } from 'rxjs';
 import { JsonBeautyPipe } from '../app.pipes';
 
 @Component({
-	selector: 'simple-comp',
-	templateUrl: './simple.component.html',
-	styleUrls: ['./simple.component.css'],
+    selector: 'simple-comp',
+    templateUrl: './simple.component.html',
+    styleUrls: ['./simple.component.css'],
+    standalone: false
 })
 export class SimpleComponent implements OnInit {
 	@ViewChild('individualwrapped', { static: true }) individualwrapped: any;

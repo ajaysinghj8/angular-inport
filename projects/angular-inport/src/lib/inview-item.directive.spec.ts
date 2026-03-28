@@ -5,7 +5,8 @@ import { InviewItemDirective } from './inview-item.directive';
 import { PositionResolver } from './utils/position-resolver';
 
 @Component({
-  template: `<div in-view-item [id]="itemId" [data]="itemData"></div>`,
+    template: `<div in-view-item [id]="itemId" [data]="itemData"></div>`,
+    standalone: false
 })
 class TestHostComponent {
   itemId: any = 'test-id';

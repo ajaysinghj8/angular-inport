@@ -34,7 +34,8 @@ import { filter, mergeMap, tap, debounce } from 'rxjs/operators';
 type IChildWithReact = [InviewItemDirective, ElementClientRect, number];
 
 @Directive({
-	selector: '[in-view-container]',
+    selector: '[in-view-container]',
+    standalone: false
 })
 export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewInit {
 	private _scrollSuscription!: Subscription;
