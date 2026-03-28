@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased] - Phase 1 Cleanups (refactor/phase1-cleanups)
+
+### Refactor
+- Removed dead `filter(() => true)` no-op operator from `InviewDirective` and `InviewContainerDirective`
+- Replaced `mergeMap(event => _of(...))` with `map()` in both directives — equivalent behavior, cleaner intent
+- Removed unused imports (`Subject`, `merge`, `Observable`, `OnInit`) from `InviewDirective`
+- Removed empty `ngOnInit()` bodies from all three directives
+- Removed dead `_throttleType` private field from `InviewDirective` and `InviewContainerDirective` (declared but never read)
+- Renamed `_previous_state` → `_previousState` in `InviewDirective` to follow camelCase convention
+- Eliminated `WindowRulerStatic` indirection — state moved directly into `WindowRuler` service instance
+- Collapsed `OffsetResolverFactory` into a static `OffsetResolver.create()` method — factory added no value
+- Removed dead `inviewPercentage()` (lowercase v) from `PositionResolver` — duplicate of `inViewPercentage()`, never called internally
+
+---
+
 ## [5.0.0] - 2026-03-29
 
 **Angular 21 compatibility release**
