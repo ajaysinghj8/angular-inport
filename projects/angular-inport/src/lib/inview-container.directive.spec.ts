@@ -24,54 +24,65 @@ class MockWindowRuler {
 const VIEWPORT: ElementClientRect = { top: 0, left: 0, bottom: 768, right: 1024, height: 768, width: 1024 };
 
 @Component({
-    template: `
-    <div in-view-container [bestMatch]="bestMatch" (inview)="onInview($event)">
+  template: `
+    <div in-view-container (inview)="onInview($event)">
       <div in-view-item id="item1" [data]="'data1'"></div>
       <div in-view-item id="item2" [data]="'data2'"></div>
     </div>
   `,
-    standalone: false
+  standalone: false,
 })
 class TestHostComponent {
-  bestMatch = false;
   lastEvent: any;
-  onInview(event: any) {
-    this.lastEvent = event;
-  }
+  onInview(event: any) { this.lastEvent = event; }
 }
 
 @Component({
-    template: `<div in-view-container (inview)="onInview($event)"></div>`,
-    standalone: false
+  template: `
+    <div in-view-container [bestMatch]="true" (inview)="onInview($event)">
+      <div in-view-item id="item1" [data]="'data1'"></div>
+      <div in-view-item id="item2" [data]="'data2'"></div>
+    </div>
+  `,
+  standalone: false,
+})
+class BestMatchHostComponent {
+  lastEvent: any;
+  onInview(event: any) { this.lastEvent = event; }
+}
+
+@Component({
+  template: `<div in-view-container (inview)="onInview($event)"></div>`,
+  standalone: false,
 })
 class EmptyContainerHostComponent {
   lastEvent: any;
-  onInview(event: any) {
-    this.lastEvent = event;
-  }
+  onInview(event: any) { this.lastEvent = event; }
 }
 
+const providers = [
+  { provide: ScrollObservable, useClass: MockScrollObservable },
+  { provide: WindowRuler, useClass: MockWindowRuler },
+];
+
 describe('InviewContainerDirective', () => {
-  let fixture: ComponentFixture<TestHostComponent>;
-  let host: TestHostComponent;
-  let directive: InviewContainerDirective;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [TestHostComponent, InviewContainerDirective, InviewItemDirective],
-      providers: [
-        { provide: ScrollObservable, useClass: MockScrollObservable },
-        { provide: WindowRuler, useClass: MockWindowRuler },
-      ],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(TestHostComponent);
-    host = fixture.componentInstance;
-    fixture.detectChanges();
-    directive = fixture.debugElement.query(By.directive(InviewContainerDirective)).injector.get(InviewContainerDirective);
-  });
-
   describe('handleOnScroll - no bestMatch (all visible children)', () => {
+    let fixture: ComponentFixture<TestHostComponent>;
+    let host: TestHostComponent;
+    let directive: InviewContainerDirective;
+
+    beforeEach(async () => {
+      await TestBed.configureTestingModule({
+        declarations: [TestHostComponent, InviewContainerDirective, InviewItemDirective],
+        providers,
+      }).compileComponents();
+
+      fixture = TestBed.createComponent(TestHostComponent);
+      host = fixture.componentInstance;
+      fixture.detectChanges();
+      directive = fixture.debugElement.query(By.directive(InviewContainerDirective)).injector.get(InviewContainerDirective);
+    });
+
     it('should emit an empty inview array when no children are visible', () => {
       spyOn(PositionResolver, 'isVisible').and.returnValue(false);
       directive.handleOnScroll(VIEWPORT);
@@ -90,7 +101,7 @@ describe('InviewContainerDirective', () => {
       expect(host.lastEvent.direction).toBeDefined();
     });
 
-    it('should emit only the children that are visible and intersect viewport', () => {
+    it('should emit only children that are visible and intersect viewport', () => {
       spyOn(PositionResolver, 'isVisible').and.callFake((el: HTMLElement) => {
         return el.getAttribute('id') === 'item1';
       });
@@ -98,7 +109,6 @@ describe('InviewContainerDirective', () => {
         if (el.getAttribute('id') === 'item1') {
           return { top: 100, left: 0, bottom: 300, right: 200, height: 200, width: 200 };
         }
-        // item2 outside viewport
         return { top: 900, left: 0, bottom: 1100, right: 200, height: 200, width: 200 };
       });
       directive.handleOnScroll(VIEWPORT);
@@ -123,12 +133,27 @@ describe('InviewContainerDirective', () => {
       directive.handleOnScroll(VIEWPORT);
       expect(host.lastEvent.direction).toEqual(jasmine.any(String));
     });
+
+    it('should unsubscribe on destroy without error', () => {
+      expect(() => fixture.destroy()).not.toThrow();
+    });
   });
 
   describe('handleOnScroll - bestMatch', () => {
-    beforeEach(() => {
-      host.bestMatch = true;
+    let fixture: ComponentFixture<BestMatchHostComponent>;
+    let host: BestMatchHostComponent;
+    let directive: InviewContainerDirective;
+
+    beforeEach(async () => {
+      await TestBed.configureTestingModule({
+        declarations: [BestMatchHostComponent, InviewContainerDirective, InviewItemDirective],
+        providers,
+      }).compileComponents();
+
+      fixture = TestBed.createComponent(BestMatchHostComponent);
+      host = fixture.componentInstance;
       fixture.detectChanges();
+      directive = fixture.debugElement.query(By.directive(InviewContainerDirective)).injector.get(InviewContainerDirective);
     });
 
     it('should emit empty object with direction when no children are visible', () => {
@@ -144,14 +169,12 @@ describe('InviewContainerDirective', () => {
       let callCount = 0;
       spyOn(PositionResolver, 'getBoundingClientRect').and.callFake(() => {
         callCount++;
-        // First child is closer to viewport center (384, 512) than the second
         if (callCount % 2 === 1) {
-          return { top: 300, left: 400, bottom: 500, right: 600, height: 200, width: 200 }; // center ~(400,500)
+          return { top: 300, left: 400, bottom: 500, right: 600, height: 200, width: 200 };
         }
-        return { top: 600, left: 800, bottom: 750, right: 1000, height: 150, width: 200 }; // center ~(675,900)
+        return { top: 600, left: 800, bottom: 750, right: 1000, height: 150, width: 200 };
       });
       directive.handleOnScroll(VIEWPORT);
-      // should emit a single item (not an array)
       expect(host.lastEvent.inview).toBeUndefined();
       expect(host.lastEvent.id).toBeDefined();
     });
@@ -162,27 +185,16 @@ describe('InviewContainerDirective', () => {
         { top: 100, left: 0, bottom: 300, right: 200, height: 200, width: 200 }
       );
       directive.handleOnScroll(VIEWPORT);
-      // bestMatch emits a single data object, not an array
       expect(Array.isArray(host.lastEvent.inview)).toBeFalse();
-    });
-  });
-
-  describe('ngOnDestroy', () => {
-    it('should unsubscribe on destroy', () => {
-      expect(() => fixture.destroy()).not.toThrow();
     });
   });
 });
 
 describe('InviewContainerDirective - empty children', () => {
   it('should not emit when container has no in-view-item children', async () => {
-    await TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       declarations: [EmptyContainerHostComponent, InviewContainerDirective, InviewItemDirective],
-      providers: [
-        { provide: ScrollObservable, useClass: MockScrollObservable },
-        { provide: WindowRuler, useClass: MockWindowRuler },
-      ],
+      providers,
     }).compileComponents();
 
     const f = TestBed.createComponent(EmptyContainerHostComponent);

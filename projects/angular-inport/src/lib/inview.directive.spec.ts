@@ -9,9 +9,7 @@ import { PositionResolver } from './utils/position-resolver';
 import { ElementClientRect } from './utils/models';
 
 class MockScrollObservable {
-  scrollObservableFor() {
-    return EMPTY;
-  }
+  scrollObservableFor() { return EMPTY; }
 }
 
 class MockWindowRuler {
@@ -24,56 +22,79 @@ const VIEWPORT: ElementClientRect = { top: 0, left: 0, bottom: 768, right: 1024,
 const IN_VIEW_RECT: ElementClientRect = { top: 100, left: 100, bottom: 300, right: 300, height: 200, width: 200 };
 const OUT_OF_VIEW_RECT: ElementClientRect = { top: 900, left: 0, bottom: 1100, right: 200, height: 200, width: 200 };
 
+const providers = [
+  { provide: ScrollObservable, useClass: MockScrollObservable },
+  { provide: WindowRuler, useClass: MockWindowRuler },
+];
+
+// --- Host components (static configs to avoid NG0100 in Angular 21) ---
+
 @Component({
-    template: `
-    <div in-view
-         [lazy]="lazy"
-         [tooLazy]="tooLazy"
-         [data]="data"
-         (inview)="onInview($event)">
-    </div>
-  `,
-    standalone: false
+  template: `<div in-view (inview)="onInview($event)"></div>`,
+  standalone: false,
 })
-class TestHostComponent {
-  lazy = false;
-  tooLazy = false;
-  data: any = undefined;
+class DefaultHostComponent {
   lastEvent: any;
-  onInview(event: any) {
-    this.lastEvent = event;
-  }
+  onInview(e: any) { this.lastEvent = e; }
 }
 
+@Component({
+  template: `<div in-view [lazy]="true" (inview)="onInview($event)"></div>`,
+  standalone: false,
+})
+class LazyHostComponent {
+  lastEvent: any;
+  onInview(e: any) { this.lastEvent = e; }
+}
+
+@Component({
+  template: `<div in-view [tooLazy]="true" (inview)="onInview($event)"></div>`,
+  standalone: false,
+})
+class TooLazyHostComponent {
+  lastEvent: any;
+  onInview(e: any) { this.lastEvent = e; }
+}
+
+@Component({
+  template: `<div in-view [data]="payload" (inview)="onInview($event)"></div>`,
+  standalone: false,
+})
+class DataHostComponent {
+  payload: any = { id: 1 };
+  lastEvent: any;
+  onInview(e: any) { this.lastEvent = e; }
+}
+
+// --- Helpers ---
+
+async function createFixture<T>(hostType: any): Promise<{ fixture: ComponentFixture<T>; host: T; directive: InviewDirective }> {
+  await TestBed.configureTestingModule({
+    declarations: [hostType, InviewDirective],
+    providers,
+  }).compileComponents();
+
+  const fixture = TestBed.createComponent(hostType) as ComponentFixture<T>;
+  fixture.detectChanges();
+  const directive = fixture.debugElement.query(By.directive(InviewDirective)).injector.get(InviewDirective);
+  return { fixture, host: fixture.componentInstance, directive };
+}
+
+// --- Tests ---
+
 describe('InviewDirective', () => {
-  let fixture: ComponentFixture<TestHostComponent>;
-  let host: TestHostComponent;
-  let directive: InviewDirective;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [TestHostComponent, InviewDirective],
-      providers: [
-        { provide: ScrollObservable, useClass: MockScrollObservable },
-        { provide: WindowRuler, useClass: MockWindowRuler },
-      ],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(TestHostComponent);
-    host = fixture.componentInstance;
-    fixture.detectChanges();
-    directive = fixture.debugElement.query(By.directive(InviewDirective)).injector.get(InviewDirective);
-  });
-
   describe('visible element', () => {
-    beforeEach(() => {
+    let host: DefaultHostComponent;
+    let directive: InviewDirective;
+
+    beforeEach(async () => {
+      ({ host, directive } = await createFixture<DefaultHostComponent>(DefaultHostComponent));
       spyOn(PositionResolver, 'isVisible').and.returnValue(true);
       spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(IN_VIEW_RECT);
     });
 
     it('should emit with status=true when element is in view', () => {
       directive.handleOnScroll(VIEWPORT);
-      expect(host.lastEvent).toBeDefined();
       expect(host.lastEvent.status).toBeTrue();
     });
 
@@ -93,13 +114,6 @@ describe('InviewDirective', () => {
       expect(host.lastEvent.inViewPercentage).toBeDefined();
     });
 
-    it('should include data in the event when data input is set', () => {
-      host.data = { id: 1 };
-      fixture.detectChanges();
-      directive.handleOnScroll(VIEWPORT);
-      expect(host.lastEvent.data).toEqual({ id: 1 });
-    });
-
     it('should not include data in event when data input is not set', () => {
       directive.handleOnScroll(VIEWPORT);
       expect(host.lastEvent.data).toBeUndefined();
@@ -107,7 +121,11 @@ describe('InviewDirective', () => {
   });
 
   describe('element out of view - lazy=false (default)', () => {
-    beforeEach(() => {
+    let host: DefaultHostComponent;
+    let directive: InviewDirective;
+
+    beforeEach(async () => {
+      ({ host, directive } = await createFixture<DefaultHostComponent>(DefaultHostComponent));
       spyOn(PositionResolver, 'isVisible').and.returnValue(true);
       spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(OUT_OF_VIEW_RECT);
     });
@@ -129,9 +147,11 @@ describe('InviewDirective', () => {
   });
 
   describe('element out of view - lazy=true', () => {
-    beforeEach(() => {
-      host.lazy = true;
-      fixture.detectChanges();
+    let host: LazyHostComponent;
+    let directive: InviewDirective;
+
+    beforeEach(async () => {
+      ({ host, directive } = await createFixture<LazyHostComponent>(LazyHostComponent));
       spyOn(PositionResolver, 'isVisible').and.returnValue(true);
       spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(OUT_OF_VIEW_RECT);
     });
@@ -143,9 +163,11 @@ describe('InviewDirective', () => {
   });
 
   describe('tooLazy - suppresses duplicate state', () => {
-    beforeEach(() => {
-      host.tooLazy = true;
-      fixture.detectChanges();
+    let host: TooLazyHostComponent;
+    let directive: InviewDirective;
+
+    beforeEach(async () => {
+      ({ host, directive } = await createFixture<TooLazyHostComponent>(TooLazyHostComponent));
     });
 
     it('should emit on the first scroll event', () => {
@@ -168,17 +190,28 @@ describe('InviewDirective', () => {
       spyOn(PositionResolver, 'isVisible').and.returnValue(true);
       const getBCR = spyOn(PositionResolver, 'getBoundingClientRect');
       getBCR.and.returnValue(IN_VIEW_RECT);
-      directive.handleOnScroll(VIEWPORT);         // visible
+      directive.handleOnScroll(VIEWPORT);
 
       host.lastEvent = undefined;
       getBCR.and.returnValue(OUT_OF_VIEW_RECT);
-      directive.handleOnScroll(VIEWPORT);         // now out of view
+      directive.handleOnScroll(VIEWPORT);
       expect(host.lastEvent).toBeDefined();
     });
   });
 
+  describe('data input', () => {
+    it('should include data in the event when data input is set', async () => {
+      const { host, directive } = await createFixture<DataHostComponent>(DataHostComponent);
+      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
+      spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(IN_VIEW_RECT);
+      directive.handleOnScroll(VIEWPORT);
+      expect(host.lastEvent.data).toEqual({ id: 1 });
+    });
+  });
+
   describe('ngOnDestroy', () => {
-    it('should unsubscribe on destroy without error', () => {
+    it('should unsubscribe on destroy without error', async () => {
+      const { fixture } = await createFixture<DefaultHostComponent>(DefaultHostComponent);
       expect(() => fixture.destroy()).not.toThrow();
     });
   });
