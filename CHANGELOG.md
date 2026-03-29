@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased] - Phase 3 Type Safety (refactor/phase3-type-safety)
+
+### Refactor
+- Added `events.ts` with typed interfaces: `InviewEvent`, `InviewContainerEvent`, `InviewBestMatchEvent`, `InviewItemData`, `InviewParts`, `InviewPercentage`
+- Typed `EventEmitter` outputs in `InviewDirective` (`EventEmitter<InviewEvent>`) and `InviewContainerDirective` (`EventEmitter<InviewContainerEvent | InviewBestMatchEvent>`) — replaces `any`
+- Typed `getData()` return value in `InviewItemDirective` — returns `InviewItemData` instead of `any`
+- Reconstructed `handleOnScroll` output objects as typed structs — no more `any` mutation
+- Exported all event interfaces from public API (`index.ts`) — consumers can now import and type their event handlers
+
+---
+
 ## [Unreleased] - Phase 2 Angular 21 Modernization (refactor/phase2-angular21-modernization)
 
 ### Refactor
