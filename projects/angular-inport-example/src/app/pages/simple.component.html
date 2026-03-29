@@ -1,87 +1,197 @@
-<div id="menu">
-	@if (ready) {
-	<div id="menu-content">
-		<h1>Individual</h1>
-		<pre class="menu-json" [innerHtml]="stateIndividual | jsonbeauty"></pre>
-<h1>Container</h1>
-		<pre class="menu-json" [innerHtml]="stateContainer | jsonbeauty"></pre>
-		<h1>Individual Wrapped</h1>
-		<pre class="menu-json" [innerHtml]="stateIndividualWrapped | jsonbeauty"></pre>
-		<h1>Container Wrapped</h1>
-		<pre class="menu-json" [innerHtml]="stateContainerWrapped | jsonbeauty"></pre>
-		<h1>Container Best Wrapped</h1>
-		<pre class="menu-json" [innerHtml]="stateContainerBestWrapped | jsonbeauty"></pre>
-	</div>
-	}
-</div>
+<div class="demo-layout">
 
-<div id="container">
-	<div id="container-content">
-		<div in-view (inview)="inViewIndividual($event)" class="box" [triggerOnInit]="true">
-			Individual
-		</div>
+  <!-- Sidebar -->
+  <aside class="demo-sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">Live State</span>
+      <span class="sidebar-hint">scroll the canvas →</span>
+    </div>
 
-		<div class="separator"></div>
+    @if (ready) {
+      <div class="state-panel">
+        <div class="state-section">
+          <div class="state-label">
+            <span class="state-dot" [class.active]="stateIndividual?.status"></span>
+            in-view
+          </div>
+          <pre class="state-json" [innerHtml]="stateIndividual | jsonbeauty"></pre>
+        </div>
 
-		<div in-view-container [triggerOnInit]="true" (inview)="inViewContainer($event)">
-			@for (item of items; track item; let index = $index) {
-			<div in-view-item [id]="index" [data]="item" class="box">
-				{{ item.name }}
-			</div>
-			}
-		</div>
+        <div class="state-section">
+          <div class="state-label">
+            <span class="state-dot" [class.active]="stateContainer?.inview?.length > 0"></span>
+            in-view-container
+          </div>
+          <pre class="state-json" [innerHtml]="stateContainer | jsonbeauty"></pre>
+        </div>
 
-		<div class="separator"></div>
+        <div class="state-section">
+          <div class="state-label">
+            <span class="state-dot" [class.active]="stateIndividualWrapped?.status"></span>
+            in-view (scrollElement)
+          </div>
+          <pre class="state-json" [innerHtml]="stateIndividualWrapped | jsonbeauty"></pre>
+        </div>
 
-		<div #individualwrapped class="boxes">
-			<div class="boxes-content">
-				<div
-					in-view
-					(inview)="inViewIndividualWrapped($event)"
-					[scrollElement]="elementIndividualWrapped"
-					[triggerOnInit]="true"
-					class="box"
-				>
-					Individual Wrapped
-				</div>
-			</div>
-		</div>
+        <div class="state-section">
+          <div class="state-label">
+            <span class="state-dot" [class.active]="stateContainerWrapped?.inview?.length > 0"></span>
+            in-view-container (scrollWindow=false)
+          </div>
+          <pre class="state-json" [innerHtml]="stateContainerWrapped | jsonbeauty"></pre>
+        </div>
 
-		<div class="separator"></div>
+        <div class="state-section">
+          <div class="state-label">
+            <span class="state-dot" [class.active]="stateContainerBestWrapped?.id !== undefined"></span>
+            in-view-container (bestMatch)
+          </div>
+          <pre class="state-json" [innerHtml]="stateContainerBestWrapped | jsonbeauty"></pre>
+        </div>
+      </div>
+    }
+  </aside>
 
-		<div
-			class="boxes"
-			in-view-container
-			[triggerOnInit]="true"
-			(inview)="inViewContainerWrapped($event)"
-			[scrollWindow]="false"
-		>
-			<div class="boxes-content">
-				@for (item of items; track item; let index = $index) {
-				<div in-view-item [id]="index" [data]="item" class="box">
-					{{ item.name }}
-				</div>
-				}
-			</div>
-		</div>
+  <!-- Scrollable canvas -->
+  <div class="demo-canvas">
+    <div class="demo-canvas-inner">
 
-		<div class="separator"></div>
+      <!-- Section 1: Individual -->
+      <section class="demo-section">
+        <div class="section-header">
+          <code class="section-tag">[in-view]</code>
+          <p class="section-desc">Tracks a single element's visibility in the window viewport.</p>
+        </div>
+        <div class="scroll-space top"></div>
+        <div
+          in-view
+          [triggerOnInit]="true"
+          (inview)="inViewIndividual($event)"
+          class="demo-box"
+          [class.in-view]="stateIndividual?.status"
+        >
+          <span class="box-icon">{{ stateIndividual?.status ? '✓' : '○' }}</span>
+          <span class="box-label">in-view</span>
+          <span class="box-pct" *ngIf="stateIndividual?.inViewPercentage">
+            {{ stateIndividual.inViewPercentage.vertical | number:'1.0-0' }}% visible
+          </span>
+        </div>
+        <div class="scroll-space bottom"></div>
+      </section>
 
-		<div
-			class="boxes"
-			in-view-container
-			[triggerOnInit]="true"
-			(inview)="inViewContainerBestWrapped($event)"
-			[scrollWindow]="false"
-			[bestMatch]="true"
-		>
-			<div class="boxes-content">
-				@for (item of items; track item; let index = $index) {
-				<div in-view-item [id]="index" [data]="item" class="box">
-					{{ item.name }}
-				</div>
-				}
-			</div>
-		</div>
-	</div>
+      <!-- Section 2: Container -->
+      <section class="demo-section">
+        <div class="section-header">
+          <code class="section-tag">[in-view-container]</code>
+          <p class="section-desc">Tracks multiple child items — emits the full list of visible items on each change.</p>
+        </div>
+        <div class="scroll-space top"></div>
+        <div
+          in-view-container
+          [triggerOnInit]="true"
+          (inview)="inViewContainer($event)"
+          class="container-group"
+        >
+          @for (item of items; track item; let index = $index) {
+            <div
+              in-view-item
+              [id]="index"
+              [data]="item"
+              class="demo-box demo-box--sm"
+              [class.in-view]="isInContainer(index)"
+            >
+              <span class="box-label">{{ item.name }}</span>
+            </div>
+          }
+        </div>
+        <div class="scroll-space bottom"></div>
+      </section>
+
+      <!-- Section 3: Individual wrapped -->
+      <section class="demo-section">
+        <div class="section-header">
+          <code class="section-tag">[in-view] [scrollElement]</code>
+          <p class="section-desc">Tracks visibility relative to a custom scrollable container, not the window.</p>
+        </div>
+        <div #individualwrapped class="scroll-container">
+          <div class="scroll-container-inner">
+            <div
+              in-view
+              [triggerOnInit]="true"
+              [scrollElement]="elementIndividualWrapped"
+              (inview)="inViewIndividualWrapped($event)"
+              class="demo-box"
+              [class.in-view]="stateIndividualWrapped?.status"
+            >
+              <span class="box-icon">{{ stateIndividualWrapped?.status ? '✓' : '○' }}</span>
+              <span class="box-label">in-view (scrollElement)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: Container wrapped -->
+      <section class="demo-section">
+        <div class="section-header">
+          <code class="section-tag">[in-view-container] [scrollWindow]="false"</code>
+          <p class="section-desc">Container tracks items inside a custom scroll container using IO root.</p>
+        </div>
+        <div
+          class="scroll-container"
+          in-view-container
+          [triggerOnInit]="true"
+          [scrollWindow]="false"
+          (inview)="inViewContainerWrapped($event)"
+        >
+          <div class="scroll-container-inner">
+            @for (item of items; track item; let index = $index) {
+              <div
+                in-view-item
+                [id]="index"
+                [data]="item"
+                class="demo-box demo-box--sm"
+                [class.in-view]="isInWrapped(index)"
+              >
+                <span class="box-label">{{ item.name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: bestMatch -->
+      <section class="demo-section">
+        <div class="section-header">
+          <code class="section-tag">[bestMatch]="true"</code>
+          <p class="section-desc">Emits only the single closest item to the centre of the scroll container.</p>
+        </div>
+        <div
+          class="scroll-container"
+          in-view-container
+          [triggerOnInit]="true"
+          [scrollWindow]="false"
+          [bestMatch]="true"
+          (inview)="inViewContainerBestWrapped($event)"
+        >
+          <div class="scroll-container-inner">
+            @for (item of items; track item; let index = $index) {
+              <div
+                in-view-item
+                [id]="index"
+                [data]="item"
+                class="demo-box demo-box--sm"
+                [class.in-view]="stateContainerBestWrapped?.id === index"
+              >
+                <span class="box-label">{{ item.name }}</span>
+                @if (stateContainerBestWrapped?.id === index) {
+                  <span class="best-badge">best match</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
 </div>

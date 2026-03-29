@@ -1,5 +1,4 @@
 import { Component, ViewChild, OnInit } from '@angular/core';
-import { JsonBeautyPipe } from '../app.pipes';
 
 @Component({
     selector: 'simple-comp',
@@ -21,9 +20,7 @@ export class SimpleComponent implements OnInit {
 
 	constructor() {
 		for (let i = 0; i < 10; i++) {
-			this.items.push({
-				name: 'Item ' + i,
-			});
+			this.items.push({ name: 'Item ' + i });
 		}
 	}
 
@@ -32,24 +29,17 @@ export class SimpleComponent implements OnInit {
 		setTimeout(() => (this.ready = true));
 	}
 
-	inViewIndividualWrapped($event: Object) {
-		this.stateIndividualWrapped = $event;
+	inViewIndividual(e: any) { this.stateIndividual = e; }
+	inViewContainer(e: any) { this.stateContainer = e; }
+	inViewIndividualWrapped(e: any) { this.stateIndividualWrapped = e; }
+	inViewContainerWrapped(e: any) { this.stateContainerWrapped = e; }
+	inViewContainerBestWrapped(e: any) { this.stateContainerBestWrapped = e; }
+
+	isInContainer(index: number): boolean {
+		return this.stateContainer?.inview?.some((item: any) => item.id === index) ?? false;
 	}
 
-	inViewIndividual($event: Object) {
-		this.stateIndividual = $event;
+	isInWrapped(index: number): boolean {
+		return this.stateContainerWrapped?.inview?.some((item: any) => item.id === index) ?? false;
 	}
-
-	inViewContainer($event: Object) {
-		this.stateContainer = $event;
-	}
-
-	inViewContainerWrapped($event: Object) {
-		this.stateContainerWrapped = $event;
-	}
-
-	inViewContainerBestWrapped($event: Object) {
-		this.stateContainerBestWrapped = $event;
-	}
-
 }
