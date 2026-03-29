@@ -1,31 +1,60 @@
-import { Component, NgZone } from '@angular/core';
+import { Component } from '@angular/core';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { EMPTY } from 'rxjs';
 import { InviewContainerDirective } from './inview-container.directive';
 import { InviewItemDirective } from './inview-item.directive';
-import { ScrollObservable } from './utils/scroll-observable';
-import { WindowRuler } from './utils/viewport-ruler';
-import { PositionResolver } from './utils/position-resolver';
-import { ElementClientRect } from './utils/models';
 
-class MockScrollObservable {
-  scrollObservableFor() {
-    return EMPTY;
+// ---- IntersectionObserver mock ----------------------------------------
+
+type IOCallback = (entries: Partial<IntersectionObserverEntry>[]) => void;
+
+class MockIntersectionObserver {
+  static instances: MockIntersectionObserver[] = [];
+  static lastCallback: IOCallback;
+
+  targets: Element[] = [];
+  callback: IOCallback;
+
+  constructor(callback: IOCallback) {
+    this.callback = callback;
+    MockIntersectionObserver.instances.push(this);
+    MockIntersectionObserver.lastCallback = callback;
   }
+
+  observe(el: Element) { this.targets.push(el); }
+  disconnect = jasmine.createSpy('disconnect');
+  unobserve(el: Element) { this.targets = this.targets.filter(t => t !== el); }
 }
 
-class MockWindowRuler {
-  getWindowViewPortRuler(): ElementClientRect {
-    return { top: 0, left: 0, bottom: 768, right: 1024, height: 768, width: 1024 };
-  }
+function fireOn(observer: MockIntersectionObserver, entries: Partial<IntersectionObserverEntry>[]) {
+  observer.callback(entries);
 }
 
-const VIEWPORT: ElementClientRect = { top: 0, left: 0, bottom: 768, right: 1024, height: 768, width: 1024 };
+function inViewEntry(target: Element): Partial<IntersectionObserverEntry> {
+  return {
+    target,
+    isIntersecting: true,
+    boundingClientRect: { top: 100, left: 0, bottom: 300, right: 200, height: 200, width: 200 } as DOMRectReadOnly,
+    rootBounds: { top: 0, left: 0, bottom: 768, right: 1024, height: 768, width: 1024 } as DOMRectReadOnly,
+    intersectionRatio: 1,
+  };
+}
+
+function outViewEntry(target: Element): Partial<IntersectionObserverEntry> {
+  return {
+    target,
+    isIntersecting: false,
+    boundingClientRect: { top: 900, left: 0, bottom: 1100, right: 200, height: 200, width: 200 } as DOMRectReadOnly,
+    rootBounds: { top: 0, left: 0, bottom: 768, right: 1024, height: 768, width: 1024 } as DOMRectReadOnly,
+    intersectionRatio: 0,
+  };
+}
+
+// ---- Host components ---------------------------------------------------
 
 @Component({
   template: `
-    <div in-view-container (inview)="onInview($event)">
+    <div in-view-container [triggerOnInit]="true" (inview)="onInview($event)">
       <div in-view-item id="item1" [data]="'data1'"></div>
       <div in-view-item id="item2" [data]="'data2'"></div>
     </div>
@@ -39,7 +68,7 @@ class TestHostComponent {
 
 @Component({
   template: `
-    <div in-view-container [bestMatch]="true" (inview)="onInview($event)">
+    <div in-view-container [bestMatch]="true" [triggerOnInit]="true" (inview)="onInview($event)">
       <div in-view-item id="item1" [data]="'data1'"></div>
       <div in-view-item id="item2" [data]="'data2'"></div>
     </div>
@@ -52,7 +81,7 @@ class BestMatchHostComponent {
 }
 
 @Component({
-  template: `<div in-view-container (inview)="onInview($event)"></div>`,
+  template: `<div in-view-container [triggerOnInit]="true" (inview)="onInview($event)"></div>`,
   standalone: false,
 })
 class EmptyContainerHostComponent {
@@ -60,150 +89,126 @@ class EmptyContainerHostComponent {
   onInview(event: any) { this.lastEvent = event; }
 }
 
-const providers = [
-  { provide: ScrollObservable, useClass: MockScrollObservable },
-  { provide: WindowRuler, useClass: MockWindowRuler },
-];
+// ---- Helpers -----------------------------------------------------------
+
+async function setupModule(hostType: any): Promise<{
+  fixture: ComponentFixture<any>;
+  host: any;
+  observer: MockIntersectionObserver;
+  directive: InviewContainerDirective;
+  itemEls: Element[];
+}> {
+  await TestBed.configureTestingModule({
+    declarations: [hostType],
+    imports: [InviewContainerDirective, InviewItemDirective],
+  }).compileComponents();
+
+  MockIntersectionObserver.instances = [];
+  const fixture = TestBed.createComponent(hostType);
+  fixture.detectChanges();
+
+  const observer = MockIntersectionObserver.instances[0];
+  const directive = fixture.debugElement
+    .query(By.directive(InviewContainerDirective))
+    .injector.get(InviewContainerDirective);
+  const itemEls = observer?.targets ?? [];
+
+  return { fixture, host: fixture.componentInstance, observer, directive, itemEls };
+}
+
+// ---- Tests ------------------------------------------------------------
 
 describe('InviewContainerDirective', () => {
+  beforeEach(() => {
+    (window as any).IntersectionObserver = MockIntersectionObserver;
+  });
+
+  afterEach(() => {
+    delete (window as any).IntersectionObserver;
+    MockIntersectionObserver.instances = [];
+  });
+
   describe('handleOnScroll - no bestMatch (all visible children)', () => {
     let fixture: ComponentFixture<TestHostComponent>;
     let host: TestHostComponent;
-    let directive: InviewContainerDirective;
+    let observer: MockIntersectionObserver;
+    let itemEls: Element[];
 
     beforeEach(async () => {
-      await TestBed.configureTestingModule({
-        declarations: [TestHostComponent],
-        imports: [InviewContainerDirective, InviewItemDirective],
-        providers,
-      }).compileComponents();
-
-      fixture = TestBed.createComponent(TestHostComponent);
-      host = fixture.componentInstance;
-      fixture.detectChanges();
-      directive = fixture.debugElement.query(By.directive(InviewContainerDirective)).injector.get(InviewContainerDirective);
+      ({ fixture, host, observer, itemEls } = await setupModule(TestHostComponent));
     });
 
-    it('should emit an empty inview array when no children are visible', () => {
-      spyOn(PositionResolver, 'isVisible').and.returnValue(false);
-      directive.handleOnScroll(VIEWPORT);
+    it('should emit an empty inview array when no children are intersecting', () => {
+      fireOn(observer, itemEls.map(el => outViewEntry(el)));
       expect(host.lastEvent).toBeDefined();
       expect(host.lastEvent.inview).toEqual([]);
     });
 
     it('should emit all visible children with direction', () => {
-      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
-      spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(
-        { top: 100, left: 0, bottom: 300, right: 200, height: 200, width: 200 }
-      );
-      directive.handleOnScroll(VIEWPORT);
-      expect(host.lastEvent).toBeDefined();
+      fireOn(observer, itemEls.map(el => inViewEntry(el)));
       expect(host.lastEvent.inview.length).toBe(2);
       expect(host.lastEvent.direction).toBeDefined();
     });
 
-    it('should emit only children that are visible and intersect viewport', () => {
-      spyOn(PositionResolver, 'isVisible').and.callFake((el: HTMLElement) => {
-        return el.getAttribute('id') === 'item1';
-      });
-      spyOn(PositionResolver, 'getBoundingClientRect').and.callFake((el: HTMLElement) => {
-        if (el.getAttribute('id') === 'item1') {
-          return { top: 100, left: 0, bottom: 300, right: 200, height: 200, width: 200 };
-        }
-        return { top: 900, left: 0, bottom: 1100, right: 200, height: 200, width: 200 };
-      });
-      directive.handleOnScroll(VIEWPORT);
+    it('should emit only children that are intersecting', () => {
+      fireOn(observer, [
+        inViewEntry(itemEls[0]),
+        outViewEntry(itemEls[1]),
+      ]);
       expect(host.lastEvent.inview.length).toBe(1);
       expect(host.lastEvent.inview[0].id).toBe('item1');
     });
 
-    it('should emit an empty inview array when no children intersect viewport', () => {
-      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
-      spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(
-        { top: 900, left: 0, bottom: 1100, right: 200, height: 200, width: 200 }
-      );
-      directive.handleOnScroll(VIEWPORT);
-      expect(host.lastEvent.inview.length).toBe(0);
-    });
-
     it('should include direction in emitted event', () => {
-      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
-      spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(
-        { top: 100, left: 0, bottom: 300, right: 200, height: 200, width: 200 }
-      );
-      directive.handleOnScroll(VIEWPORT);
-      expect(host.lastEvent.direction).toEqual(jasmine.any(String));
+      fireOn(observer, itemEls.map(el => inViewEntry(el)));
+      expect(['up', 'down']).toContain(host.lastEvent.direction);
     });
 
-    it('should unsubscribe on destroy without error', () => {
+    it('should disconnect the observer on destroy without error', () => {
+      const obs = MockIntersectionObserver.instances[0];
       expect(() => fixture.destroy()).not.toThrow();
+      expect(obs.disconnect).toHaveBeenCalled();
     });
   });
 
   describe('handleOnScroll - bestMatch', () => {
-    let fixture: ComponentFixture<BestMatchHostComponent>;
     let host: BestMatchHostComponent;
-    let directive: InviewContainerDirective;
+    let observer: MockIntersectionObserver;
+    let itemEls: Element[];
 
     beforeEach(async () => {
-      await TestBed.configureTestingModule({
-        declarations: [BestMatchHostComponent],
-        imports: [InviewContainerDirective, InviewItemDirective],
-        providers,
-      }).compileComponents();
-
-      fixture = TestBed.createComponent(BestMatchHostComponent);
-      host = fixture.componentInstance;
-      fixture.detectChanges();
-      directive = fixture.debugElement.query(By.directive(InviewContainerDirective)).injector.get(InviewContainerDirective);
+      ({ host, observer, itemEls } = await setupModule(BestMatchHostComponent));
     });
 
-    it('should emit empty object with direction when no children are visible', () => {
-      spyOn(PositionResolver, 'isVisible').and.returnValue(false);
-      directive.handleOnScroll(VIEWPORT);
-      expect(host.lastEvent).toBeDefined();
-      expect(host.lastEvent.id).toBeUndefined();
+    it('should emit empty object with direction when no children are intersecting', () => {
+      fireOn(observer, itemEls.map(el => outViewEntry(el)));
+      expect(host.lastEvent.inview).toBeUndefined();
       expect(host.lastEvent.direction).toBeDefined();
     });
 
-    it('should emit the single closest child when both children are visible', () => {
-      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
-      let callCount = 0;
-      spyOn(PositionResolver, 'getBoundingClientRect').and.callFake(() => {
-        callCount++;
-        if (callCount % 2 === 1) {
-          return { top: 300, left: 400, bottom: 500, right: 600, height: 200, width: 200 };
-        }
-        return { top: 600, left: 800, bottom: 750, right: 1000, height: 150, width: 200 };
-      });
-      directive.handleOnScroll(VIEWPORT);
-      expect(host.lastEvent.inview).toBeUndefined();
-      expect(host.lastEvent.id).toBeDefined();
-    });
-
-    it('should emit only one result even when multiple children are visible', () => {
-      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
-      spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(
-        { top: 100, left: 0, bottom: 300, right: 200, height: 200, width: 200 }
-      );
-      directive.handleOnScroll(VIEWPORT);
+    it('should emit only one result even when multiple children are intersecting', () => {
+      fireOn(observer, itemEls.map(el => inViewEntry(el)));
       expect(Array.isArray(host.lastEvent.inview)).toBeFalse();
+      expect(host.lastEvent.direction).toBeDefined();
     });
   });
 });
 
 describe('InviewContainerDirective - empty children', () => {
-  it('should not emit when container has no in-view-item children', async () => {
-    await TestBed.configureTestingModule({
-      declarations: [EmptyContainerHostComponent],
-      imports: [InviewContainerDirective, InviewItemDirective],
-      providers,
-    }).compileComponents();
+  beforeEach(() => {
+    (window as any).IntersectionObserver = MockIntersectionObserver;
+    MockIntersectionObserver.instances = [];
+  });
 
-    const f = TestBed.createComponent(EmptyContainerHostComponent);
-    f.detectChanges();
-    const dir = f.debugElement.query(By.directive(InviewContainerDirective)).injector.get(InviewContainerDirective);
-    dir.handleOnScroll(VIEWPORT);
-    expect(f.componentInstance.lastEvent).toBeUndefined();
+  afterEach(() => {
+    delete (window as any).IntersectionObserver;
+    MockIntersectionObserver.instances = [];
+  });
+
+  it('should emit an empty inview array when container has no in-view-item children', async () => {
+    const { host } = await setupModule(EmptyContainerHostComponent);
+    // triggerOnInit fires _emitCurrentState() immediately with zero visible children
+    expect(host.lastEvent).toBeDefined();
+    expect(host.lastEvent.inview).toEqual([]);
   });
 });

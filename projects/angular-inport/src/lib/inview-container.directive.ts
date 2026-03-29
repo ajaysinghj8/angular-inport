@@ -11,20 +11,16 @@ import {
 	inject,
 	input,
 	computed,
+	PLATFORM_ID,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { timer } from 'rxjs';
-import { map, tap, debounce } from 'rxjs/operators';
 
 import { InviewItemDirective } from './inview-item.directive';
-import { ScrollObservable } from './utils/scroll-observable';
-import { WindowRuler } from './utils/viewport-ruler';
 import { OffsetResolver } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementClientRect } from './utils/models';
-import { InviewContainerEvent, InviewBestMatchEvent } from './utils/events';
-
-type IChildWithReact = [InviewItemDirective, ElementClientRect, number];
+import { InviewContainerEvent, InviewBestMatchEvent, InviewItemData } from './utils/events';
 
 @Directive({
 	selector: '[in-view-container]',
@@ -32,92 +28,133 @@ type IChildWithReact = [InviewItemDirective, ElementClientRect, number];
 })
 export class InviewContainerDirective implements AfterViewInit {
 	private readonly _element = inject(ElementRef);
-	private readonly _scrollObservable = inject(ScrollObservable);
-	private readonly _windowRuler = inject(WindowRuler);
 	private readonly _zone = inject(NgZone);
 	private readonly _destroyRef = inject(DestroyRef);
+	private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
 	readonly offset = input<Array<number | string> | number | string>([0, 0, 0, 0]);
 	readonly viewPortOffset = input<Array<number> | number | string>([0, 0, 0, 0]);
+	/** @deprecated No-op with IntersectionObserver — fires only on actual visibility changes. */
 	readonly throttle = input(0);
 	readonly scrollWindow = input(true);
-	readonly data = input<any>(undefined);
+	readonly data = input<unknown>(undefined);
 	readonly bestMatch = input(false);
 	readonly triggerOnInit = input(false);
 
-	private readonly _normalizedOffset = computed(() =>
-		OffsetResolver.create(this.offset()).normalizeOffset()
-	);
-	private readonly _normalizedViewPortOffset = computed(() =>
-		OffsetResolver.create(this.viewPortOffset()).normalizeOffset()
-	);
+	private readonly _rootMargin = computed(() => {
+		const off = OffsetResolver.create(this.offset()).normalizeOffset();
+		const vp = OffsetResolver.create(this.viewPortOffset()).normalizeOffset();
+		const combined = off.map((v, i) => {
+			const a = typeof v === 'string' ? parseFloat(v) : v;
+			const b = typeof vp[i] === 'string' ? parseFloat(vp[i] as string) : vp[i] as number;
+			const pct = (typeof v === 'string' && v.endsWith('%')) || (typeof vp[i] === 'string' && (vp[i] as string).endsWith('%'));
+			return pct ? `${a + b}%` : `${a + b}px`;
+		});
+		return combined.join(' ');
+	});
 
 	private _lastScrollY = 0;
-	private _scrollDirection = 'down';
+	private _scrollDirection: 'up' | 'down' = 'down';
+	private _observer?: IntersectionObserver;
+	private _visibleChildren = new Map<Element, InviewItemDirective>();
+	private _initialized = false;
 
 	@Output() inview: EventEmitter<InviewContainerEvent | InviewBestMatchEvent> = new EventEmitter();
 	@ContentChildren(InviewItemDirective, { descendants: true, emitDistinctChangesOnly: false })
 	private _inviewChildren!: QueryList<InviewItemDirective>;
 
 	ngAfterViewInit() {
-		this._zone.runOutsideAngular(() => {
-			this._scrollObservable
-				.scrollObservableFor(this.scrollWindow() ? window : this._element.nativeElement)
-				.pipe(
-					debounce(() => timer(this.throttle())),
-					map(() => this._getViewPortRuler()),
-					tap(() => this._checkScrollDirection()),
-					takeUntilDestroyed(this._destroyRef),
-				)
-				.subscribe((containersBounds: ElementClientRect) => this.handleOnScroll(containersBounds));
-		});
-		if (this.triggerOnInit()) return this.handleOnScroll(this._getViewPortRuler());
+		if (!this._isBrowser) return;
+
+		this._createObserver();
+
+		// Re-sync when projected children change
+		this._inviewChildren.changes
+			.pipe(takeUntilDestroyed(this._destroyRef))
+			.subscribe(() => this._syncObservedChildren());
+
+		this._destroyRef.onDestroy(() => this._observer?.disconnect());
+
+		if (this.triggerOnInit()) this._emitCurrentState();
 	}
 
-	private _checkScrollDirection() {
-		if (this.scrollWindow()) {
-			this._scrollDirection = window.scrollY > this._lastScrollY ? 'down' : 'up';
-			this._lastScrollY = window.scrollY;
-		} else {
-			this._scrollDirection = this._element.nativeElement.scrollTop > this._lastScrollY ? 'down' : 'up';
-			this._lastScrollY = this._element.nativeElement.scrollTop;
+	private _createObserver() {
+		this._observer = new IntersectionObserver(
+			(entries) => this._onIntersection(entries),
+			{
+				root: this.scrollWindow() ? null : this._element.nativeElement,
+				rootMargin: this._rootMargin(),
+			},
+		);
+		this._inviewChildren.forEach(child =>
+			this._observer!.observe(child._element.nativeElement),
+		);
+	}
+
+	private _syncObservedChildren() {
+		this._observer?.disconnect();
+		this._visibleChildren.clear();
+		this._inviewChildren.forEach(child =>
+			this._observer!.observe(child._element.nativeElement),
+		);
+	}
+
+	private _updateScrollDirection() {
+		const y = window.scrollY ?? 0;
+		this._scrollDirection = y >= this._lastScrollY ? 'down' : 'up';
+		this._lastScrollY = y;
+	}
+
+	private _onIntersection(entries: IntersectionObserverEntry[]) {
+		// Suppress initial fire (one per observed element) unless triggerOnInit
+		if (!this._initialized) {
+			this._initialized = true;
+			if (!this.triggerOnInit()) return;
 		}
+
+		this._updateScrollDirection();
+
+		for (const entry of entries) {
+			const child = this._inviewChildren.find(
+				c => c._element.nativeElement === entry.target,
+			);
+			if (!child) continue;
+			if (entry.isIntersecting) {
+				this._visibleChildren.set(entry.target, child);
+			} else {
+				this._visibleChildren.delete(entry.target);
+			}
+		}
+
+		this._emitCurrentState();
 	}
 
-	private _getViewPortRuler() {
-		return this.scrollWindow()
-			? this._windowRuler.getWindowViewPortRuler()
-			: PositionResolver.getBoundingClientRect(this._element.nativeElement);
-	}
-
-	handleOnScroll(containersBounds: ElementClientRect) {
-		if (!this._inviewChildren || this._inviewChildren.length === 0) return;
-
-		const viewPortOffsetRect = PositionResolver.offsetRect(containersBounds, this._normalizedViewPortOffset());
-		const visibleChildren: Array<IChildWithReact> = this._inviewChildren
-			.toArray()
-			.map((child: InviewItemDirective): IChildWithReact => {
-				const elementRect = PositionResolver.offsetRect(child.getELementRect(), this._normalizedOffset());
-				return [child, elementRect, PositionResolver.distance(viewPortOffsetRect, elementRect)];
-			})
-			.filter(([child, rect]) => child.isVisible() && PositionResolver.intersectRect(rect, viewPortOffsetRect));
+	private _emitCurrentState() {
+		const visible = Array.from(this._visibleChildren.values());
 
 		if (!this.bestMatch()) {
 			const event: InviewContainerEvent = {
-				inview: visibleChildren.map(([child]) => child.getData()),
-				direction: this._scrollDirection as 'up' | 'down',
+				inview: visible.map(c => c.getData()),
+				direction: this._scrollDirection,
 			};
 			this._zone.run(() => this.inview.emit(event));
 			return;
 		}
 
-		const bestMatch = visibleChildren.sort(([, , distanceA], [, , distanceB]) => {
-			if (distanceA > distanceB) return 1;
-			else if (distanceA < distanceB) return -1;
-			return 0;
-		})[0];
-		const itemData = bestMatch ? bestMatch[0].getData() : { id: undefined, data: undefined };
-		const event: InviewBestMatchEvent = { ...itemData, direction: this._scrollDirection as 'up' | 'down' };
+		// bestMatch: pick the child closest to the centre of the root rect
+		const rootRect = this.scrollWindow()
+			? { top: 0, left: 0, bottom: window.innerHeight, right: window.innerWidth, height: window.innerHeight, width: window.innerWidth } as ElementClientRect
+			: PositionResolver.getBoundingClientRect(this._element.nativeElement);
+
+		const withDistance = visible.map(child => {
+			const rect = PositionResolver.getBoundingClientRect(child._element.nativeElement) as ElementClientRect;
+			return { child, distance: PositionResolver.distance(rootRect, rect) };
+		});
+
+		withDistance.sort((a, b) => a.distance - b.distance);
+		const best = withDistance[0];
+		const itemData: InviewItemData = best ? best.child.getData() : { id: undefined, data: undefined };
+		const event: InviewBestMatchEvent = { ...itemData, direction: this._scrollDirection };
 		this._zone.run(() => this.inview.emit(event));
 	}
 }

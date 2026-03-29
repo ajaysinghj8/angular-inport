@@ -3,6 +3,8 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../out-tsc/app",
+    "baseUrl": "../../",
+    "ignoreDeprecations": "6.0",
     "types": [],
     "paths": {
       "angular-inport/*": ["projects/angular-inport/src/lib/*"],

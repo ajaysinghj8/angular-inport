@@ -1,5 +1,24 @@
 # Changelog
 
+## [Unreleased] - Phase 5 IntersectionObserver Migration (refactor/phase5-intersection-observer)
+
+### Refactor
+- Replaced the entire scroll/resize pipeline in both directives with the browser-native `IntersectionObserver` API
+- `ScrollObservable` and `WindowRuler` deleted — no longer needed
+- `OffsetResolver.toRootMargin()` added — converts normalized offset to a CSS `rootMargin` string
+- `offset` + `viewPortOffset` inputs are combined into a single `rootMargin` value passed to `IntersectionObserver`
+- `throttle` input marked `@deprecated` — IO fires natively only on actual visibility changes, no debouncing needed
+- `InviewContainerDirective` tracks visible children in a `Map` and reacts to `QueryList.changes` to re-sync observed targets dynamically
+- `scrollWindow=false` uses the container element as the IO `root`
+- All directive specs rewritten to use a `MockIntersectionObserver` — no more mocking `ScrollObservable` / `WindowRuler`
+
+### Performance impact
+- Zero scroll/resize event listeners — IO runs off the main thread
+- No `NgZone` leakage — CD only triggered at the emit site
+- SSR safe — IO is gated on `isPlatformBrowser` (returns `EMPTY` on server)
+
+---
+
 ## [Unreleased] - Phase 4 Performance & SSR Safety (refactor/phase4-performance)
 
 ### Refactor
