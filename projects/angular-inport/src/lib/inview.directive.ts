@@ -16,6 +16,7 @@ import { ScrollObservable } from './utils/scroll-observable';
 import { OffsetResolver } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementClientRect } from './utils/models';
+import { InviewEvent } from './utils/events';
 import { WindowRuler } from './utils/viewport-ruler';
 import { debounce, map } from 'rxjs/operators';
 
@@ -48,7 +49,7 @@ export class InviewDirective implements AfterViewInit {
 
 	private _previousState!: boolean;
 
-	@Output() private inview: EventEmitter<any> = new EventEmitter();
+	@Output() private inview: EventEmitter<InviewEvent> = new EventEmitter();
 
 	ngAfterViewInit() {
 		this._scrollObservable
@@ -83,17 +84,15 @@ export class InviewDirective implements AfterViewInit {
 			return;
 		}
 
-		const output: any = { status: isVisible };
-
-		if (this.data() !== undefined) {
-			output.data = this.data();
-		}
-
 		if (!this.lazy() && !isVisible) {
-			output.isClipped = false;
-			output.isOutsideView = true;
-			output.parts = { top: false, right: false, left: false, bottom: false };
-			output.inViewPercentage = { vertical: 0, horizontal: 0 };
+			const output: InviewEvent = {
+				status: false,
+				isClipped: false,
+				isOutsideView: true,
+				parts: { top: false, right: false, left: false, bottom: false },
+				inViewPercentage: { vertical: 0, horizontal: 0 },
+			};
+			if (this.data() !== undefined) output.data = this.data();
 			this._zone.run(() => this.inview.emit(output));
 		}
 
@@ -103,10 +102,14 @@ export class InviewDirective implements AfterViewInit {
 		}
 
 		const { isClipped, isOutsideView } = PositionResolver.clippedStatus(elementOffsetRect, viewPortOffsetRect);
-		output.isClipped = isClipped;
-		output.isOutsideView = isOutsideView;
-		output.parts = PositionResolver.inViewParts(viewPortOffsetRect, elementOffsetRect);
-		output.inViewPercentage = PositionResolver.inViewPercentage(viewPortOffsetRect, elementOffsetRect);
+		const output: InviewEvent = {
+			status: true,
+			isClipped,
+			isOutsideView,
+			parts: PositionResolver.inViewParts(viewPortOffsetRect, elementOffsetRect),
+			inViewPercentage: PositionResolver.inViewPercentage(viewPortOffsetRect, elementOffsetRect),
+		};
+		if (this.data() !== undefined) output.data = this.data();
 		this._zone.run(() => this.inview.emit(output));
 		this._previousState = isVisible;
 	}
