@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased] - Phase 2 Angular 21 Modernization (refactor/phase2-angular21-modernization)
+
+### Refactor
+- Converted all three directives to `standalone: true` — no NgModule declaration needed
+- Replaced constructor dependency injection with `inject()` in all directives and `ScrollObservable`
+- Replaced `@Input()` decorators with signal inputs (`input()`, `computed()`) in all directives
+- Fixed public API typo: `scrollELement` → `scrollElement` in `InviewDirective`
+- Replaced `takeUntil(destroy$)` + `ngOnDestroy` with `takeUntilDestroyed(destroyRef)` — no manual subscription management
+- Moved `WindowRuler` and `ScrollObservable` to `providedIn: 'root'` — no NgModule providers needed
+- `NgInviewModule` kept as `@deprecated` backward-compat shim (imports standalone directives, no providers)
+- Updated all spec files: standalone directives moved from `declarations` to `imports`
+
+---
+
 ## [Unreleased] - Phase 1 Cleanups (refactor/phase1-cleanups)
 
 ### Refactor
