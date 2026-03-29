@@ -1,9 +1,13 @@
 <div class="bench-layout">
+
   <aside class="bench-sidebar">
-    <h2>Performance Benchmark</h2>
+    <div class="bench-title">
+      <span class="bench-icon">⚡</span>
+      <span>Performance Benchmark</span>
+    </div>
     <p class="bench-desc">
-      Measures <strong>IntersectionObserver</strong> event throughput, Angular
-      change-detection cycles, and event-to-CD ratio as item count scales.
+      Measures IntersectionObserver event throughput and Angular change-detection
+      cycles as item count scales. Scrolls the canvas automatically.
     </p>
 
     <button class="btn-run" (click)="runBenchmark()" [disabled]="running">
@@ -11,72 +15,85 @@
     </button>
 
     <div class="quick-test">
-      <label>Quick test — item count:</label>
+      <div class="quick-label">Quick — item count:</div>
       <div class="count-buttons">
         @for (n of itemCounts; track n) {
-          <button
-            [class.active]="selectedCount === n"
-            (click)="selectedCount = n; setupItems(n)"
-          >{{ n }}</button>
+          <button [class.active]="selectedCount === n" (click)="setupItems(n)">
+            {{ n }}
+          </button>
         }
       </div>
     </div>
 
     <div class="live-stats">
-      <h3>Live stats</h3>
-      <dl>
-        <dt>Items rendered</dt><dd>{{ items.length }}</dd>
-        <dt>inview events</dt><dd>{{ eventCount }}</dd>
-        <dt>CD cycles</dt><dd>{{ cdCycles }}</dd>
-      </dl>
+      <div class="stats-label">Live</div>
+      <div class="stats-grid">
+        <span class="stat-key">Items</span>
+        <span class="stat-val">{{ items.length }}</span>
+        <span class="stat-key">Events fired</span>
+        <span class="stat-val accent">{{ eventCount }}</span>
+        <span class="stat-key">CD cycles</span>
+        <span class="stat-val">{{ cdCycles }}</span>
+        <span class="stat-key">CD / event</span>
+        <span class="stat-val">{{ eventCount > 0 ? (cdCycles / eventCount | number:'1.1-1') : '—' }}</span>
+      </div>
     </div>
 
     @if (results.length > 0) {
-      <div class="results-table-wrap">
-        <h3>Results</h3>
+      <div class="results-wrap">
+        <div class="results-label">Results</div>
         <table class="results-table">
           <thead>
             <tr>
               <th>Items</th>
               <th>Events</th>
               <th>CD cycles</th>
-              <th>Events/CD</th>
-              <th>Duration</th>
-              <th>Events/s</th>
+              <th>CD/event</th>
+              <th>ms</th>
+              <th>ev/s</th>
             </tr>
           </thead>
           <tbody>
             @for (r of results; track r.items) {
               <tr>
-                <td>{{ r.items }}</td>
+                <td class="col-items">{{ r.items }}</td>
                 <td>{{ r.events }}</td>
                 <td>{{ r.cdCycles }}</td>
-                <td>{{ r.cdCycles > 0 ? (r.events / r.cdCycles | number:'1.1-1') : '—' }}</td>
-                <td>{{ r.durationMs }} ms</td>
-                <td class="highlight">{{ r.eventsPerSec | number }}</td>
+                <td class="col-ratio">{{ r.cdPerEvent }}</td>
+                <td>{{ r.durationMs }}</td>
+                <td class="col-eps">{{ r.eventsPerSec | number }}</td>
               </tr>
             }
           </tbody>
         </table>
-        <p class="bench-note">
-          <strong>Events/CD</strong> — how many inview events fire per Angular CD cycle.
-          Higher = more efficient. With IO + <code>zone.run()</code> only at emit site,
-          this should be close to 1 (one CD per emission, not per scroll tick).
+        <p class="results-note">
+          <strong>CD/event</strong> — Angular change-detection cycles per inview
+          emission. Lower is better. With <code>zone.run()</code> only at emit site,
+          this should be ≈1.
         </p>
       </div>
     }
   </aside>
 
-  <main
-    id="bench-scroll-container"
+  <!-- The directive goes on the scrollable element itself so IO root = this element -->
+  <div
+    id="bench-scroll-area"
     class="bench-scroll"
+    in-view-container
+    [scrollWindow]="false"
+    (inview)="onInview($event)"
   >
-    <div in-view-container [scrollWindow]="false" (inview)="onInview($event)">
-      @for (item of items; track item) {
-        <div in-view-item [id]="item" [data]="item" class="bench-item">
-          Item {{ item }}
-        </div>
-      }
-    </div>
-  </main>
+    @for (item of items; track item) {
+      <div in-view-item [id]="item" [data]="item" class="bench-item">
+        <span class="item-index">#{{ item }}</span>
+        <span class="item-label">Item {{ item }}</span>
+      </div>
+    }
+    @if (items.length === 0) {
+      <div class="bench-empty">
+        Select an item count above or click <strong>Run Full Benchmark</strong>.
+      </div>
+    }
+  </div>
+
 </div>
