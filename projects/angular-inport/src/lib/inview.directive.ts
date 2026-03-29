@@ -1,141 +1,117 @@
 import {
 	Directive,
-	Input,
 	Output,
-	OnDestroy,
 	EventEmitter,
 	ElementRef,
 	NgZone,
 	AfterViewInit,
+	DestroyRef,
+	inject,
+	input,
+	computed,
+	PLATFORM_ID,
 } from '@angular/core';
-import { Subscription, timer, of as _of } from 'rxjs';
-import { ScrollObservable } from './utils/scroll-observable';
+import { isPlatformBrowser } from '@angular/common';
 import { OffsetResolver } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementClientRect } from './utils/models';
-import { WindowRuler } from './utils/viewport-ruler';
-import { debounce, map } from 'rxjs/operators';
+import { InviewEvent } from './utils/events';
 
 @Directive({
 	selector: '[in-view]',
-	standalone: false,
+	standalone: true,
 })
-export class InviewDirective implements OnDestroy, AfterViewInit {
-	private _offset: Array<number | string> = [0, 0, 0, 0];
-	private _viewPortOffset: Array<number | string> = [0, 0, 0, 0];
-	private _throttle: number = 0;
-	private _scrollElement!: HTMLElement;
-	private _lazy: boolean = false;
-	private _tooLazy: boolean = false;
+export class InviewDirective implements AfterViewInit {
+	private readonly _element = inject(ElementRef);
+	private readonly _zone = inject(NgZone);
+	private readonly _destroyRef = inject(DestroyRef);
+	private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+	readonly offset = input<Array<number | string> | number | string>([0, 0, 0, 0]);
+	readonly viewPortOffset = input<Array<number | string> | number | string>([0, 0, 0, 0]);
+	/** @deprecated No-op with IntersectionObserver — fires only on actual visibility changes. */
+	readonly throttle = input(0);
+	readonly scrollElement = input<HTMLElement | undefined>(undefined);
+	readonly lazy = input(false);
+	readonly tooLazy = input(false);
+	readonly data = input<unknown>(undefined);
+	readonly triggerOnInit = input(false);
+
+	private readonly _rootMargin = computed(() => {
+		const off = OffsetResolver.create(this.offset()).normalizeOffset();
+		const vp = OffsetResolver.create(this.viewPortOffset()).normalizeOffset();
+		// Combine: positive offset expands element → equivalent rootMargin; same for viewPortOffset.
+		const combined = off.map((v, i) => {
+			const a = typeof v === 'string' ? parseFloat(v) : v;
+			const b = typeof vp[i] === 'string' ? parseFloat(vp[i] as string) : vp[i] as number;
+			const pct = (typeof v === 'string' && v.endsWith('%')) || (typeof vp[i] === 'string' && (vp[i] as string).endsWith('%'));
+			return pct ? `${a + b}%` : `${a + b}px`;
+		});
+		return combined.join(' ');
+	});
+
 	private _previousState!: boolean;
-	private _data: any;
-	private _triggerOnInit: boolean = false;
+	private _initialized = false;
 
-	@Input()
-	set triggerOnInit(triggerOnInit: boolean) {
-		this._triggerOnInit = !!triggerOnInit;
-	}
-	@Input()
-	set offset(offset: Array<number | string> | number | string) {
-		this._offset = OffsetResolver.create(offset).normalizeOffset();
-	}
-	@Input()
-	set viewPortOffset(offset: Array<number | string> | number | string) {
-		this._viewPortOffset = OffsetResolver.create(offset).normalizeOffset();
-	}
-	@Input()
-	set throttle(throttle: number) {
-		this._throttle = throttle;
-	}
-	@Input()
-	set scrollELement(sw: HTMLElement) {
-		this._scrollElement = sw;
-	}
-	@Input()
-	set lazy(lzy: boolean) {
-		this._lazy = lzy;
-	}
-	@Input()
-	set tooLazy(lzy: boolean) {
-		this._tooLazy = lzy;
-	}
-	@Input()
-	set data(_d: any) {
-		this._data = _d;
-	}
-
-	@Output() private inview: EventEmitter<any> = new EventEmitter();
-	private _scrollerSubscription!: Subscription;
-
-	constructor(
-		private _scrollObservable: ScrollObservable,
-		private _element: ElementRef,
-		private _zone: NgZone,
-		private _windowRuler: WindowRuler,
-	) {}
+	@Output() private inview: EventEmitter<InviewEvent> = new EventEmitter();
 
 	ngAfterViewInit() {
-		this._scrollerSubscription = this._scrollObservable
-			.scrollObservableFor(this._scrollElement || window)
-			.pipe(
-				debounce(() => timer(this._throttle)),
-				map(() => this._getViewPortRuler()),
-			)
-			.subscribe((containersBounds: ElementClientRect) => this.handleOnScroll(containersBounds));
-		if (this._triggerOnInit) return this.handleOnScroll(this._getViewPortRuler());
-	}
+		if (!this._isBrowser) return;
 
-	private _getViewPortRuler() {
-		return this._scrollElement
-			? PositionResolver.getBoundingClientRect(this._scrollElement)
-			: this._windowRuler.getWindowViewPortRuler();
-	}
-
-	ngOnDestroy() {
-		if (this._scrollerSubscription) {
-			this._scrollerSubscription.unsubscribe();
-		}
-	}
-
-	handleOnScroll(containersBounds: ElementClientRect) {
-		const viewPortOffsetRect = PositionResolver.offsetRect(containersBounds, this._viewPortOffset);
-		const elementOffsetRect = PositionResolver.offsetRect(
-			PositionResolver.getBoundingClientRect(this._element.nativeElement),
-			this._offset,
+		const observer = new IntersectionObserver(
+			(entries) => this._onIntersection(entries[0]),
+			{
+				root: this.scrollElement() ?? null,
+				rootMargin: this._rootMargin(),
+				threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+			},
 		);
-		const isVisible =
-			PositionResolver.isVisible(this._element.nativeElement) &&
-			PositionResolver.intersectRect(elementOffsetRect, viewPortOffsetRect);
 
-		if (this._tooLazy && this._previousState !== undefined && this._previousState === isVisible) {
+		observer.observe(this._element.nativeElement);
+		this._destroyRef.onDestroy(() => observer.disconnect());
+	}
+
+	private _onIntersection(entry: IntersectionObserverEntry) {
+		// IO always fires once on initial observe — suppress unless triggerOnInit=true
+		if (!this._initialized) {
+			this._initialized = true;
+			if (!this.triggerOnInit()) return;
+		}
+
+		const isVisible = entry.isIntersecting;
+
+		if (this.tooLazy() && this._previousState !== undefined && this._previousState === isVisible) {
 			return;
-		}
-
-		const output: any = { status: isVisible };
-
-		if (this._data !== undefined) {
-			output.data = this._data;
-		}
-
-		if (!this._lazy && !isVisible) {
-			output.isClipped = false;
-			output.isOutsideView = true;
-			output.parts = { top: false, right: false, left: false, bottom: false };
-			output.inViewPercentage = { vertical: 0, horizontal: 0 };
-			this._zone.run(() => this.inview.emit(output));
 		}
 
 		if (!isVisible) {
-			this._previousState = isVisible;
+			if (!this.lazy()) {
+				const output: InviewEvent = {
+					status: false,
+					isClipped: false,
+					isOutsideView: true,
+					parts: { top: false, right: false, left: false, bottom: false },
+					inViewPercentage: { vertical: 0, horizontal: 0 },
+				};
+				if (this.data() !== undefined) output.data = this.data();
+				this._zone.run(() => this.inview.emit(output));
+			}
+			this._previousState = false;
 			return;
 		}
 
-		const { isClipped, isOutsideView } = PositionResolver.clippedStatus(elementOffsetRect, viewPortOffsetRect);
-		output.isClipped = isClipped;
-		output.isOutsideView = isOutsideView;
-		output.parts = PositionResolver.inViewParts(viewPortOffsetRect, elementOffsetRect);
-		output.inViewPercentage = PositionResolver.inViewPercentage(viewPortOffsetRect, elementOffsetRect);
+		const elementRect = entry.boundingClientRect as unknown as ElementClientRect;
+		const rootRect = (entry.rootBounds ?? entry.boundingClientRect) as unknown as ElementClientRect;
+		const { isClipped, isOutsideView } = PositionResolver.clippedStatus(elementRect, rootRect);
+		const output: InviewEvent = {
+			status: true,
+			isClipped,
+			isOutsideView,
+			parts: PositionResolver.inViewParts(rootRect, elementRect),
+			inViewPercentage: PositionResolver.inViewPercentage(rootRect, elementRect),
+		};
+		if (this.data() !== undefined) output.data = this.data();
 		this._zone.run(() => this.inview.emit(output));
-		this._previousState = isVisible;
+		this._previousState = true;
 	}
 }

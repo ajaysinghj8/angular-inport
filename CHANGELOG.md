@@ -1,5 +1,58 @@
 # Changelog
 
+## [Unreleased] - Phase 5 IntersectionObserver Migration (refactor/phase5-intersection-observer)
+
+### Refactor
+- Replaced the entire scroll/resize pipeline in both directives with the browser-native `IntersectionObserver` API
+- `ScrollObservable` and `WindowRuler` deleted — no longer needed
+- `OffsetResolver.toRootMargin()` added — converts normalized offset to a CSS `rootMargin` string
+- `offset` + `viewPortOffset` inputs are combined into a single `rootMargin` value passed to `IntersectionObserver`
+- `throttle` input marked `@deprecated` — IO fires natively only on actual visibility changes, no debouncing needed
+- `InviewContainerDirective` tracks visible children in a `Map` and reacts to `QueryList.changes` to re-sync observed targets dynamically
+- `scrollWindow=false` uses the container element as the IO `root`
+- All directive specs rewritten to use a `MockIntersectionObserver` — no more mocking `ScrollObservable` / `WindowRuler`
+
+### Performance impact
+- Zero scroll/resize event listeners — IO runs off the main thread
+- No `NgZone` leakage — CD only triggered at the emit site
+- SSR safe — IO is gated on `isPlatformBrowser` (returns `EMPTY` on server)
+
+---
+
+## [Unreleased] - Phase 4 Performance & SSR Safety (refactor/phase4-performance)
+
+### Refactor
+- Wrapped scroll subscriptions in `NgZone.runOutsideAngular()` in both directives — scroll/resize events no longer trigger Angular change detection on every tick; `zone.run()` is called only at the emit site
+- Added `isPlatformBrowser` guard to `WindowRuler` — returns a zero rect on SSR instead of crashing on `window.innerHeight` / `window.innerWidth`
+- Added `isPlatformBrowser` guard to `ScrollObservable` — returns `EMPTY` on SSR instead of crashing on `fromEvent(window, ...)` / `fromEvent(document, ...)`
+
+---
+
+## [Unreleased] - Phase 3 Type Safety (refactor/phase3-type-safety)
+
+### Refactor
+- Added `events.ts` with typed interfaces: `InviewEvent`, `InviewContainerEvent`, `InviewBestMatchEvent`, `InviewItemData`, `InviewParts`, `InviewPercentage`
+- Typed `EventEmitter` outputs in `InviewDirective` (`EventEmitter<InviewEvent>`) and `InviewContainerDirective` (`EventEmitter<InviewContainerEvent | InviewBestMatchEvent>`) — replaces `any`
+- Typed `getData()` return value in `InviewItemDirective` — returns `InviewItemData` instead of `any`
+- Reconstructed `handleOnScroll` output objects as typed structs — no more `any` mutation
+- Exported all event interfaces from public API (`index.ts`) — consumers can now import and type their event handlers
+
+---
+
+## [Unreleased] - Phase 2 Angular 21 Modernization (refactor/phase2-angular21-modernization)
+
+### Refactor
+- Converted all three directives to `standalone: true` — no NgModule declaration needed
+- Replaced constructor dependency injection with `inject()` in all directives and `ScrollObservable`
+- Replaced `@Input()` decorators with signal inputs (`input()`, `computed()`) in all directives
+- Fixed public API typo: `scrollELement` → `scrollElement` in `InviewDirective`
+- Replaced `takeUntil(destroy$)` + `ngOnDestroy` with `takeUntilDestroyed(destroyRef)` — no manual subscription management
+- Moved `WindowRuler` and `ScrollObservable` to `providedIn: 'root'` — no NgModule providers needed
+- `NgInviewModule` kept as `@deprecated` backward-compat shim (imports standalone directives, no providers)
+- Updated all spec files: standalone directives moved from `declarations` to `imports`
+
+---
+
 ## [Unreleased] - Phase 1 Cleanups (refactor/phase1-cleanups)
 
 ### Refactor

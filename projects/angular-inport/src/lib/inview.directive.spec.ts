@@ -1,36 +1,46 @@
 import { Component } from '@angular/core';
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { EMPTY } from 'rxjs';
 import { InviewDirective } from './inview.directive';
-import { ScrollObservable } from './utils/scroll-observable';
-import { WindowRuler } from './utils/viewport-ruler';
-import { PositionResolver } from './utils/position-resolver';
-import { ElementClientRect } from './utils/models';
 
-class MockScrollObservable {
-  scrollObservableFor() { return EMPTY; }
-}
+// ---- IntersectionObserver mock ----------------------------------------
 
-class MockWindowRuler {
-  getWindowViewPortRuler(): ElementClientRect {
-    return { top: 0, left: 0, bottom: 768, right: 1024, height: 768, width: 1024 };
+type IOCallback = (entries: Partial<IntersectionObserverEntry>[]) => void;
+
+class MockIntersectionObserver {
+  static instance: MockIntersectionObserver;
+  static callback: IOCallback;
+
+  constructor(callback: IOCallback) {
+    MockIntersectionObserver.instance = this;
+    MockIntersectionObserver.callback = callback;
   }
+  observe = jasmine.createSpy('observe');
+  disconnect = jasmine.createSpy('disconnect');
 }
 
-const VIEWPORT: ElementClientRect = { top: 0, left: 0, bottom: 768, right: 1024, height: 768, width: 1024 };
-const IN_VIEW_RECT: ElementClientRect = { top: 100, left: 100, bottom: 300, right: 300, height: 200, width: 200 };
-const OUT_OF_VIEW_RECT: ElementClientRect = { top: 900, left: 0, bottom: 1100, right: 200, height: 200, width: 200 };
+function fire(entries: Partial<IntersectionObserverEntry>[]) {
+  MockIntersectionObserver.callback(entries);
+}
 
-const providers = [
-  { provide: ScrollObservable, useClass: MockScrollObservable },
-  { provide: WindowRuler, useClass: MockWindowRuler },
-];
+const IN_VIEW_ENTRY: Partial<IntersectionObserverEntry> = {
+  isIntersecting: true,
+  boundingClientRect: { top: 100, left: 100, bottom: 300, right: 300, height: 200, width: 200 } as DOMRectReadOnly,
+  rootBounds: { top: 0, left: 0, bottom: 768, right: 1024, height: 768, width: 1024 } as DOMRectReadOnly,
+  intersectionRatio: 1,
+};
 
-// --- Host components (static configs to avoid NG0100 in Angular 21) ---
+const OUT_OF_VIEW_ENTRY: Partial<IntersectionObserverEntry> = {
+  isIntersecting: false,
+  boundingClientRect: { top: 900, left: 0, bottom: 1100, right: 200, height: 200, width: 200 } as DOMRectReadOnly,
+  rootBounds: { top: 0, left: 0, bottom: 768, right: 1024, height: 768, width: 1024 } as DOMRectReadOnly,
+  intersectionRatio: 0,
+};
+
+// ---- Host components ---------------------------------------------------
 
 @Component({
-  template: `<div in-view (inview)="onInview($event)"></div>`,
+  template: `<div in-view [triggerOnInit]="true" (inview)="onInview($event)"></div>`,
   standalone: false,
 })
 class DefaultHostComponent {
@@ -39,7 +49,7 @@ class DefaultHostComponent {
 }
 
 @Component({
-  template: `<div in-view [lazy]="true" (inview)="onInview($event)"></div>`,
+  template: `<div in-view [lazy]="true" [triggerOnInit]="true" (inview)="onInview($event)"></div>`,
   standalone: false,
 })
 class LazyHostComponent {
@@ -48,7 +58,7 @@ class LazyHostComponent {
 }
 
 @Component({
-  template: `<div in-view [tooLazy]="true" (inview)="onInview($event)"></div>`,
+  template: `<div in-view [tooLazy]="true" [triggerOnInit]="true" (inview)="onInview($event)"></div>`,
   standalone: false,
 })
 class TooLazyHostComponent {
@@ -57,7 +67,7 @@ class TooLazyHostComponent {
 }
 
 @Component({
-  template: `<div in-view [data]="payload" (inview)="onInview($event)"></div>`,
+  template: `<div in-view [data]="payload" [triggerOnInit]="true" (inview)="onInview($event)"></div>`,
   standalone: false,
 })
 class DataHostComponent {
@@ -66,153 +76,158 @@ class DataHostComponent {
   onInview(e: any) { this.lastEvent = e; }
 }
 
-// --- Helpers ---
+@Component({
+  template: `<div in-view (inview)="onInview($event)"></div>`,
+  standalone: false,
+})
+class NoTriggerHostComponent {
+  lastEvent: any;
+  onInview(e: any) { this.lastEvent = e; }
+}
 
-async function createFixture<T>(hostType: any): Promise<{ fixture: ComponentFixture<T>; host: T; directive: InviewDirective }> {
+// ---- Helper -----------------------------------------------------------
+
+async function createFixture<T>(hostType: any): Promise<{ fixture: ComponentFixture<T>; host: T }> {
   await TestBed.configureTestingModule({
-    declarations: [hostType, InviewDirective],
-    providers,
+    declarations: [hostType],
+    imports: [InviewDirective],
   }).compileComponents();
 
   const fixture = TestBed.createComponent(hostType) as ComponentFixture<T>;
   fixture.detectChanges();
-  const directive = fixture.debugElement.query(By.directive(InviewDirective)).injector.get(InviewDirective);
-  return { fixture, host: fixture.componentInstance, directive };
+  return { fixture, host: fixture.componentInstance };
 }
 
-// --- Tests ---
+// ---- Tests ------------------------------------------------------------
 
 describe('InviewDirective', () => {
+  beforeEach(() => {
+    (window as any).IntersectionObserver = MockIntersectionObserver;
+  });
+
+  afterEach(() => {
+    delete (window as any).IntersectionObserver;
+  });
+
   describe('visible element', () => {
     let host: DefaultHostComponent;
-    let directive: InviewDirective;
 
     beforeEach(async () => {
-      ({ host, directive } = await createFixture<DefaultHostComponent>(DefaultHostComponent));
-      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
-      spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(IN_VIEW_RECT);
+      ({ host } = await createFixture<DefaultHostComponent>(DefaultHostComponent));
     });
 
     it('should emit with status=true when element is in view', () => {
-      directive.handleOnScroll(VIEWPORT);
+      fire([IN_VIEW_ENTRY]);
       expect(host.lastEvent.status).toBeTrue();
     });
 
     it('should include isClipped and isOutsideView in the event', () => {
-      directive.handleOnScroll(VIEWPORT);
+      fire([IN_VIEW_ENTRY]);
       expect(host.lastEvent.isClipped).toBeDefined();
       expect(host.lastEvent.isOutsideView).toBeDefined();
     });
 
     it('should include parts in the event', () => {
-      directive.handleOnScroll(VIEWPORT);
+      fire([IN_VIEW_ENTRY]);
       expect(host.lastEvent.parts).toBeDefined();
     });
 
     it('should include inViewPercentage in the event', () => {
-      directive.handleOnScroll(VIEWPORT);
+      fire([IN_VIEW_ENTRY]);
       expect(host.lastEvent.inViewPercentage).toBeDefined();
     });
 
     it('should not include data in event when data input is not set', () => {
-      directive.handleOnScroll(VIEWPORT);
+      fire([IN_VIEW_ENTRY]);
       expect(host.lastEvent.data).toBeUndefined();
     });
   });
 
   describe('element out of view - lazy=false (default)', () => {
     let host: DefaultHostComponent;
-    let directive: InviewDirective;
 
     beforeEach(async () => {
-      ({ host, directive } = await createFixture<DefaultHostComponent>(DefaultHostComponent));
-      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
-      spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(OUT_OF_VIEW_RECT);
+      ({ host } = await createFixture<DefaultHostComponent>(DefaultHostComponent));
     });
 
-    it('should emit with status=false when element is not intersecting viewport', () => {
-      directive.handleOnScroll(VIEWPORT);
+    it('should emit with status=false when element is not intersecting', () => {
+      fire([OUT_OF_VIEW_ENTRY]);
       expect(host.lastEvent.status).toBeFalse();
     });
 
     it('should include isOutsideView=true in the event', () => {
-      directive.handleOnScroll(VIEWPORT);
+      fire([OUT_OF_VIEW_ENTRY]);
       expect(host.lastEvent.isOutsideView).toBeTrue();
     });
 
     it('should include inViewPercentage of 0 for vertical and horizontal', () => {
-      directive.handleOnScroll(VIEWPORT);
+      fire([OUT_OF_VIEW_ENTRY]);
       expect(host.lastEvent.inViewPercentage).toEqual({ vertical: 0, horizontal: 0 });
     });
   });
 
   describe('element out of view - lazy=true', () => {
     let host: LazyHostComponent;
-    let directive: InviewDirective;
 
     beforeEach(async () => {
-      ({ host, directive } = await createFixture<LazyHostComponent>(LazyHostComponent));
-      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
-      spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(OUT_OF_VIEW_RECT);
+      ({ host } = await createFixture<LazyHostComponent>(LazyHostComponent));
     });
 
     it('should NOT emit when element is not visible and lazy=true', () => {
-      directive.handleOnScroll(VIEWPORT);
+      fire([OUT_OF_VIEW_ENTRY]);
       expect(host.lastEvent).toBeUndefined();
     });
   });
 
   describe('tooLazy - suppresses duplicate state', () => {
     let host: TooLazyHostComponent;
-    let directive: InviewDirective;
 
     beforeEach(async () => {
-      ({ host, directive } = await createFixture<TooLazyHostComponent>(TooLazyHostComponent));
+      ({ host } = await createFixture<TooLazyHostComponent>(TooLazyHostComponent));
     });
 
     it('should emit on the first scroll event', () => {
-      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
-      spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(IN_VIEW_RECT);
-      directive.handleOnScroll(VIEWPORT);
+      fire([IN_VIEW_ENTRY]);
       expect(host.lastEvent).toBeDefined();
     });
 
     it('should not re-emit if state has not changed (visible → visible)', () => {
-      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
-      spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(IN_VIEW_RECT);
-      directive.handleOnScroll(VIEWPORT);
+      fire([IN_VIEW_ENTRY]);
       host.lastEvent = undefined;
-      directive.handleOnScroll(VIEWPORT);
+      fire([IN_VIEW_ENTRY]);
       expect(host.lastEvent).toBeUndefined();
     });
 
     it('should re-emit when state changes from visible to not visible', () => {
-      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
-      const getBCR = spyOn(PositionResolver, 'getBoundingClientRect');
-      getBCR.and.returnValue(IN_VIEW_RECT);
-      directive.handleOnScroll(VIEWPORT);
-
+      fire([IN_VIEW_ENTRY]);
       host.lastEvent = undefined;
-      getBCR.and.returnValue(OUT_OF_VIEW_RECT);
-      directive.handleOnScroll(VIEWPORT);
+      fire([OUT_OF_VIEW_ENTRY]);
       expect(host.lastEvent).toBeDefined();
     });
   });
 
   describe('data input', () => {
     it('should include data in the event when data input is set', async () => {
-      const { host, directive } = await createFixture<DataHostComponent>(DataHostComponent);
-      spyOn(PositionResolver, 'isVisible').and.returnValue(true);
-      spyOn(PositionResolver, 'getBoundingClientRect').and.returnValue(IN_VIEW_RECT);
-      directive.handleOnScroll(VIEWPORT);
+      const { host } = await createFixture<DataHostComponent>(DataHostComponent);
+      fire([IN_VIEW_ENTRY]);
       expect(host.lastEvent.data).toEqual({ id: 1 });
     });
   });
 
-  describe('ngOnDestroy', () => {
-    it('should unsubscribe on destroy without error', async () => {
+  describe('triggerOnInit=false (default)', () => {
+    it('should NOT emit on initial observation when triggerOnInit is false', async () => {
+      const { host } = await createFixture<NoTriggerHostComponent>(NoTriggerHostComponent);
+      // The initial IO callback is suppressed when triggerOnInit=false
+      fire([IN_VIEW_ENTRY]);
+      expect(host.lastEvent).toBeUndefined();
+    });
+  });
+
+  describe('destroy', () => {
+    it('should disconnect observer on destroy without error', async () => {
       const { fixture } = await createFixture<DefaultHostComponent>(DefaultHostComponent);
       expect(() => fixture.destroy()).not.toThrow();
+      expect(MockIntersectionObserver.instance.disconnect).toHaveBeenCalled();
     });
   });
 });

@@ -29,7 +29,8 @@ describe('InviewItemDirective', () => {
   describe('getData()', () => {
     it('should return the id and data set via inputs', async () => {
       await TestBed.configureTestingModule({
-        declarations: [TestHostComponent, InviewItemDirective],
+        declarations: [TestHostComponent],
+        imports: [InviewItemDirective],
       }).compileComponents();
 
       const fixture = TestBed.createComponent(TestHostComponent);
@@ -43,7 +44,8 @@ describe('InviewItemDirective', () => {
 
     it('should return undefined id and data when inputs are not set', async () => {
       await TestBed.configureTestingModule({
-        declarations: [NoInputHostComponent, InviewItemDirective],
+        declarations: [NoInputHostComponent],
+        imports: [InviewItemDirective],
       }).compileComponents();
 
       const fixture = TestBed.createComponent(NoInputHostComponent);
@@ -57,7 +59,8 @@ describe('InviewItemDirective', () => {
 
     it('should return static id and data bound directly in template', async () => {
       await TestBed.configureTestingModule({
-        declarations: [StaticInputHostComponent, InviewItemDirective],
+        declarations: [StaticInputHostComponent],
+        imports: [InviewItemDirective],
       }).compileComponents();
 
       const fixture = TestBed.createComponent(StaticInputHostComponent);
@@ -76,7 +79,8 @@ describe('InviewItemDirective', () => {
 
     beforeEach(async () => {
       await TestBed.configureTestingModule({
-        declarations: [TestHostComponent, InviewItemDirective],
+        declarations: [TestHostComponent],
+        imports: [InviewItemDirective],
       }).compileComponents();
 
       fixture = TestBed.createComponent(TestHostComponent);
@@ -99,7 +103,8 @@ describe('InviewItemDirective', () => {
   describe('getELementRect()', () => {
     it('should delegate to PositionResolver.getBoundingClientRect', async () => {
       await TestBed.configureTestingModule({
-        declarations: [TestHostComponent, InviewItemDirective],
+        declarations: [TestHostComponent],
+        imports: [InviewItemDirective],
       }).compileComponents();
 
       const fixture = TestBed.createComponent(TestHostComponent);

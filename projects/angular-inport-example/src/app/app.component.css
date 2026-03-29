@@ -1,63 +1,80 @@
-#menu {
-	position: fixed;
-	left: 0px;
-	top: 0px;
-	z-index: 1;
-	background: #ccc;
-	width: 25%;
-	height: 100%;
-	opacity: 0.7;
-	box-shadow: 5px 0px 10px 0px rgba(0, 0, 0, 1);
-	overflow-y: auto;
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: #13131f;
+  border-bottom: 1px solid #1e1e2e;
+  z-index: 100;
 }
 
-#menu-content {
-	padding: 10px;
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-#container {
-	position: relative;
-	left: 25%;
-	width: 100%;
-	margin: 0px;
+.brand-icon {
+  color: #7eb8f7;
+  font-size: 1.2rem;
 }
 
-#container-content {
-	padding-top: 110%;
-	padding-bottom: 110%;
-	padding-left: 110%;
-	padding-right: 110%;
-	width: 100%;
+.brand-name {
+  font-weight: 600;
+  color: #e8eaf0;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
 }
 
-.box {
-	height: 150px;
-	width: 70%;
-	margin-left: 15%;
-	border: 5px solid;
-	position: relative;
-	text-align: center;
-	font-size: 50px;
-	line-height: 150px;
-	margin-bottom: 10px;
+.brand-version {
+  font-size: 0.7rem;
+  color: #555;
+  background: #1e1e2e;
+  padding: 1px 6px;
+  border-radius: 10px;
+  border: 1px solid #2a2a3e;
 }
 
-.separator {
-	height: 300px;
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.boxes {
-	width: 70%;
-	margin-left: 15%;
-	border: 5px solid red;
-	height: 500px;
-	overflow: auto;
+.navbar-links a {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #888;
+  transition: color 0.15s, background 0.15s;
 }
 
-.boxes-content {
-	padding-top: 110%;
-	padding-bottom: 110%;
-	padding-left: 110%;
-	padding-right: 110%;
-	width: 100%;
+.navbar-links a:hover {
+  color: #c8ccd4;
+  background: #1e1e2e;
+}
+
+.navbar-links a.active {
+  color: #7eb8f7;
+  background: rgba(126, 184, 247, 0.08);
+}
+
+.navbar-github {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+  border-left: 1px solid #1e1e2e;
+  padding-left: 12px !important;
+}
+
+.app-content {
+  margin-top: 52px;
+  height: calc(100vh - 52px);
+  overflow: hidden;
 }
