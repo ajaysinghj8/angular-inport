@@ -12,9 +12,7 @@ export class OffsetResolver {
 		}
 		return this.offset;
 	}
-}
 
-export class OffsetResolverFactory {
 	static create(offset: Array<number | string> | number | string) {
 		return new OffsetResolver(offset);
 	}

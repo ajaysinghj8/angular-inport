@@ -2,7 +2,6 @@ import {
 	Directive,
 	ContentChildren,
 	QueryList,
-	OnInit,
 	OnDestroy,
 	AfterViewInit,
 	Input,
@@ -11,35 +10,24 @@ import {
 	ElementRef,
 	NgZone,
 } from '@angular/core';
-import { Subject, Subscription, timer, of as _of } from 'rxjs';
+import { Subscription, timer } from 'rxjs';
 
 import { InviewItemDirective } from './inview-item.directive';
 import { ScrollObservable } from './utils/scroll-observable';
 import { WindowRuler } from './utils/viewport-ruler';
-import { OffsetResolverFactory } from './utils/offset-resolver';
+import { OffsetResolver } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementClientRect } from './utils/models';
-import { filter, mergeMap, tap, debounce } from 'rxjs/operators';
-
-// allmost same configuration as child
-// child will not have inview property? to trigger changes
-// will use scroll on this or window
-// will check wheather the child is in view port
-// will start checking from last inview child and with direction of scroll until a child is not visible
-// can return all inview children
-// or best match case
-// if container is used then first check if container itself is in the viewport of the window.
-// then only the futher calculation should take place
+import { map, tap, debounce } from 'rxjs/operators';
 
 type IChildWithReact = [InviewItemDirective, ElementClientRect, number];
 
 @Directive({
-    selector: '[in-view-container]',
-    standalone: false
+	selector: '[in-view-container]',
+	standalone: false,
 })
-export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewInit {
+export class InviewContainerDirective implements OnDestroy, AfterViewInit {
 	private _scrollSuscription!: Subscription;
-	private _throttleType: string = 'debounce';
 	private _offset: Array<number | string> = [0, 0, 0, 0];
 	private _viewPortOffset: Array<number | string> = [0, 0, 0, 0];
 	private _throttle: number = 0;
@@ -50,10 +38,9 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
 	private _scrollDirection: string = 'down';
 	private _triggerOnInit!: boolean;
 
-	@Input() trigger!: Subject<any>;
 	@Input()
 	set offset(offset: Array<number | string> | number | string) {
-		this._offset = OffsetResolverFactory.create(offset).normalizeOffset();
+		this._offset = OffsetResolver.create(offset).normalizeOffset();
 	}
 	@Input()
 	set triggerOnInit(triggerOnInit: boolean) {
@@ -61,7 +48,7 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
 	}
 	@Input()
 	set viewPortOffset(offset: Array<number> | number | string) {
-		this._viewPortOffset = OffsetResolverFactory.create(offset).normalizeOffset();
+		this._viewPortOffset = OffsetResolver.create(offset).normalizeOffset();
 	}
 	@Input()
 	set throttle(throttle: number) {
@@ -91,14 +78,12 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
 		private _zone: NgZone,
 	) {}
 
-	ngOnInit() {}
 	ngAfterViewInit() {
 		this._scrollSuscription = this._scrollObservable
 			.scrollObservableFor(this._scrollWindow ? window : this._element.nativeElement)
 			.pipe(
 				debounce(() => timer(this._throttle)),
-				filter(() => true),
-				mergeMap((event: any) => _of(this._getViewPortRuler())),
+				map(() => this._getViewPortRuler()),
 				tap(() => this._checkScrollDirection()),
 			)
 			.subscribe((containersBounds: ElementClientRect) => this.handleOnScroll(containersBounds));
@@ -120,6 +105,7 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
 			? this._windowRuler.getWindowViewPortRuler()
 			: PositionResolver.getBoundingClientRect(this._element.nativeElement);
 	}
+
 	ngOnDestroy() {
 		if (this._scrollSuscription) {
 			this._scrollSuscription.unsubscribe();
@@ -129,9 +115,6 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
 	handleOnScroll(containersBounds: ElementClientRect) {
 		if (!this._inviewChildren || this._inviewChildren.length === 0) return;
 
-		// check of scroll up or down
-		// Note:: check all children from parent if it is in view or not
-		// for cache of less iterations start from the last visible  item then based on scroll up and down check list further
 		const viewPortOffsetRect = PositionResolver.offsetRect(containersBounds, this._viewPortOffset);
 		const visibleChildren: Array<IChildWithReact> = this._inviewChildren
 			.toArray()
@@ -159,10 +142,3 @@ export class InviewContainerDirective implements OnInit, OnDestroy, AfterViewIni
 		this._zone.run(() => this.inview.emit(data));
 	}
 }
-
-//  inview-container -> inview-item ->
-
-//  scrollWindow =  true -> will test it against the window scroll event with container.
-//  scrollWindow = false -> means we need to attach scroll event on this container.
-
-// inview ->  directly used against the window.
