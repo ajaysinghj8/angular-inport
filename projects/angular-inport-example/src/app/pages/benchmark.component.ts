@@ -1,5 +1,4 @@
 import { Component, NgZone, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
-import { InviewDirective, InviewContainerDirective, InviewItemDirective } from 'projects/angular-inport/src/lib';
 
 interface BenchResult {
   label: string;

@@ -1,7 +1,7 @@
 import { HashLocationStrategy, LocationStrategy } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { NgInviewModule } from 'projects/angular-inport/src/lib';
+import { NgInviewModule } from 'angular-inport';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';

@@ -1,5 +1,4 @@
 import { Component, ViewChild, OnInit } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
 import { JsonBeautyPipe } from '../app.pipes';
 
 @Component({
@@ -11,7 +10,6 @@ import { JsonBeautyPipe } from '../app.pipes';
 export class SimpleComponent implements OnInit {
 	@ViewChild('individualwrapped', { static: true }) individualwrapped: any;
 
-	trigger: any = new BehaviorSubject(0);
 	stateIndividual: any = {};
 	stateContainer: any = {};
 	stateIndividualWrapped: any = {};
@@ -54,7 +52,4 @@ export class SimpleComponent implements OnInit {
 		this.stateContainerBestWrapped = $event;
 	}
 
-	triggerCustom() {
-		this.trigger.next(0);
-	}
 }

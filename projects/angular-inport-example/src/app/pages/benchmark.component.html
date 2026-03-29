@@ -71,15 +71,12 @@
     id="bench-scroll-container"
     class="bench-scroll"
   >
-    <in-view-container
-      [scrollWindow]="false"
-      (inview)="onInview($event)"
-    >
+    <div in-view-container [scrollWindow]="false" (inview)="onInview($event)">
       @for (item of items; track item) {
         <div in-view-item [id]="item" [data]="item" class="bench-item">
           Item {{ item }}
         </div>
       }
-    </in-view-container>
+    </div>
   </main>
 </div>
