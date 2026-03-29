@@ -1,0 +1,85 @@
+<div class="bench-layout">
+  <aside class="bench-sidebar">
+    <h2>Performance Benchmark</h2>
+    <p class="bench-desc">
+      Measures <strong>IntersectionObserver</strong> event throughput, Angular
+      change-detection cycles, and event-to-CD ratio as item count scales.
+    </p>
+
+    <button class="btn-run" (click)="runBenchmark()" [disabled]="running">
+      {{ running ? 'Running…' : 'Run Full Benchmark' }}
+    </button>
+
+    <div class="quick-test">
+      <label>Quick test — item count:</label>
+      <div class="count-buttons">
+        @for (n of itemCounts; track n) {
+          <button
+            [class.active]="selectedCount === n"
+            (click)="selectedCount = n; setupItems(n)"
+          >{{ n }}</button>
+        }
+      </div>
+    </div>
+
+    <div class="live-stats">
+      <h3>Live stats</h3>
+      <dl>
+        <dt>Items rendered</dt><dd>{{ items.length }}</dd>
+        <dt>inview events</dt><dd>{{ eventCount }}</dd>
+        <dt>CD cycles</dt><dd>{{ cdCycles }}</dd>
+      </dl>
+    </div>
+
+    @if (results.length > 0) {
+      <div class="results-table-wrap">
+        <h3>Results</h3>
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Items</th>
+              <th>Events</th>
+              <th>CD cycles</th>
+              <th>Events/CD</th>
+              <th>Duration</th>
+              <th>Events/s</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of results; track r.items) {
+              <tr>
+                <td>{{ r.items }}</td>
+                <td>{{ r.events }}</td>
+                <td>{{ r.cdCycles }}</td>
+                <td>{{ r.cdCycles > 0 ? (r.events / r.cdCycles | number:'1.1-1') : '—' }}</td>
+                <td>{{ r.durationMs }} ms</td>
+                <td class="highlight">{{ r.eventsPerSec | number }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <p class="bench-note">
+          <strong>Events/CD</strong> — how many inview events fire per Angular CD cycle.
+          Higher = more efficient. With IO + <code>zone.run()</code> only at emit site,
+          this should be close to 1 (one CD per emission, not per scroll tick).
+        </p>
+      </div>
+    }
+  </aside>
+
+  <main
+    id="bench-scroll-container"
+    class="bench-scroll"
+  >
+    <in-view-container
+      [scrollWindow]="false"
+      (inview)="onInview($event)"
+    >
+      @for (item of items; track item) {
+        <div in-view-item [id]="item" [data]="item" class="bench-item">
+          Item {{ item }}
+        </div>
+      }
+    </in-view-container>
+  </main>
+</div>
