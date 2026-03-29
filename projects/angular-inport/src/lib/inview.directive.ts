@@ -52,14 +52,16 @@ export class InviewDirective implements AfterViewInit {
 	@Output() private inview: EventEmitter<InviewEvent> = new EventEmitter();
 
 	ngAfterViewInit() {
-		this._scrollObservable
-			.scrollObservableFor(this.scrollElement() || window)
-			.pipe(
-				debounce(() => timer(this.throttle())),
-				map(() => this._getViewPortRuler()),
-				takeUntilDestroyed(this._destroyRef),
-			)
-			.subscribe((containersBounds: ElementClientRect) => this.handleOnScroll(containersBounds));
+		this._zone.runOutsideAngular(() => {
+			this._scrollObservable
+				.scrollObservableFor(this.scrollElement() || window)
+				.pipe(
+					debounce(() => timer(this.throttle())),
+					map(() => this._getViewPortRuler()),
+					takeUntilDestroyed(this._destroyRef),
+				)
+				.subscribe((containersBounds: ElementClientRect) => this.handleOnScroll(containersBounds));
+		});
 		if (this.triggerOnInit()) return this.handleOnScroll(this._getViewPortRuler());
 	}
 
