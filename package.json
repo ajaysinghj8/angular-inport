@@ -1,6 +1,6 @@
 {
   "name": "angular-inport",
-  "version": "4.0.0",
+  "version": "5.1.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
