@@ -73,7 +73,8 @@ describe('InviewContainerDirective', () => {
 
     beforeEach(async () => {
       await TestBed.configureTestingModule({
-        declarations: [TestHostComponent, InviewContainerDirective, InviewItemDirective],
+        declarations: [TestHostComponent],
+        imports: [InviewContainerDirective, InviewItemDirective],
         providers,
       }).compileComponents();
 
@@ -146,7 +147,8 @@ describe('InviewContainerDirective', () => {
 
     beforeEach(async () => {
       await TestBed.configureTestingModule({
-        declarations: [BestMatchHostComponent, InviewContainerDirective, InviewItemDirective],
+        declarations: [BestMatchHostComponent],
+        imports: [InviewContainerDirective, InviewItemDirective],
         providers,
       }).compileComponents();
 
@@ -193,7 +195,8 @@ describe('InviewContainerDirective', () => {
 describe('InviewContainerDirective - empty children', () => {
   it('should not emit when container has no in-view-item children', async () => {
     await TestBed.configureTestingModule({
-      declarations: [EmptyContainerHostComponent, InviewContainerDirective, InviewItemDirective],
+      declarations: [EmptyContainerHostComponent],
+      imports: [InviewContainerDirective, InviewItemDirective],
       providers,
     }).compileComponents();
 
