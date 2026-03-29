@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased] - Phase 4 Performance & SSR Safety (refactor/phase4-performance)
+
+### Refactor
+- Wrapped scroll subscriptions in `NgZone.runOutsideAngular()` in both directives — scroll/resize events no longer trigger Angular change detection on every tick; `zone.run()` is called only at the emit site
+- Added `isPlatformBrowser` guard to `WindowRuler` — returns a zero rect on SSR instead of crashing on `window.innerHeight` / `window.innerWidth`
+- Added `isPlatformBrowser` guard to `ScrollObservable` — returns `EMPTY` on SSR instead of crashing on `fromEvent(window, ...)` / `fromEvent(document, ...)`
+
+---
+
 ## [Unreleased] - Phase 3 Type Safety (refactor/phase3-type-safety)
 
 ### Refactor

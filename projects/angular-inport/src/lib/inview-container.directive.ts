@@ -60,15 +60,17 @@ export class InviewContainerDirective implements AfterViewInit {
 	private _inviewChildren!: QueryList<InviewItemDirective>;
 
 	ngAfterViewInit() {
-		this._scrollObservable
-			.scrollObservableFor(this.scrollWindow() ? window : this._element.nativeElement)
-			.pipe(
-				debounce(() => timer(this.throttle())),
-				map(() => this._getViewPortRuler()),
-				tap(() => this._checkScrollDirection()),
-				takeUntilDestroyed(this._destroyRef),
-			)
-			.subscribe((containersBounds: ElementClientRect) => this.handleOnScroll(containersBounds));
+		this._zone.runOutsideAngular(() => {
+			this._scrollObservable
+				.scrollObservableFor(this.scrollWindow() ? window : this._element.nativeElement)
+				.pipe(
+					debounce(() => timer(this.throttle())),
+					map(() => this._getViewPortRuler()),
+					tap(() => this._checkScrollDirection()),
+					takeUntilDestroyed(this._destroyRef),
+				)
+				.subscribe((containersBounds: ElementClientRect) => this.handleOnScroll(containersBounds));
+		});
 		if (this.triggerOnInit()) return this.handleOnScroll(this._getViewPortRuler());
 	}
 
