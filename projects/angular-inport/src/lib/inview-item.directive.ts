@@ -1,25 +1,16 @@
-import { Directive, ElementRef, Input } from '@angular/core';
+import { Directive, ElementRef, inject, input } from '@angular/core';
 import { ElementClientRect } from './utils/models';
 import { PositionResolver } from './utils/position-resolver';
 
 @Directive({
 	selector: '[in-view-item]',
-	standalone: false,
+	standalone: true,
 })
 export class InviewItemDirective {
-	private _data: any;
-	private _id: any;
+	private readonly _element = inject(ElementRef);
 
-	@Input()
-	set data(d: any) {
-		this._data = d;
-	}
-	@Input()
-	set id(_id: any) {
-		this._id = _id;
-	}
-
-	constructor(private _element: ElementRef) {}
+	readonly id = input<any>(undefined);
+	readonly data = input<any>(undefined);
 
 	getELementRect(): ElementClientRect {
 		return PositionResolver.getBoundingClientRect(this._element.nativeElement);
@@ -28,6 +19,6 @@ export class InviewItemDirective {
 		return PositionResolver.isVisible(this._element.nativeElement);
 	}
 	getData(): any {
-		return { id: this._id, data: this._data };
+		return { id: this.id(), data: this.data() };
 	}
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ElementClientRect } from './models';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class WindowRuler {
 	private _windowRect!: ElementClientRect;
 

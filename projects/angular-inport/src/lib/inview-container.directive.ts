@@ -2,15 +2,19 @@ import {
 	Directive,
 	ContentChildren,
 	QueryList,
-	OnDestroy,
 	AfterViewInit,
-	Input,
 	Output,
 	EventEmitter,
 	ElementRef,
 	NgZone,
+	DestroyRef,
+	inject,
+	input,
+	computed,
 } from '@angular/core';
-import { Subscription, timer } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { timer } from 'rxjs';
+import { map, tap, debounce } from 'rxjs/operators';
 
 import { InviewItemDirective } from './inview-item.directive';
 import { ScrollObservable } from './utils/scroll-observable';
@@ -18,80 +22,57 @@ import { WindowRuler } from './utils/viewport-ruler';
 import { OffsetResolver } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementClientRect } from './utils/models';
-import { map, tap, debounce } from 'rxjs/operators';
 
 type IChildWithReact = [InviewItemDirective, ElementClientRect, number];
 
 @Directive({
 	selector: '[in-view-container]',
-	standalone: false,
+	standalone: true,
 })
-export class InviewContainerDirective implements OnDestroy, AfterViewInit {
-	private _scrollSuscription!: Subscription;
-	private _offset: Array<number | string> = [0, 0, 0, 0];
-	private _viewPortOffset: Array<number | string> = [0, 0, 0, 0];
-	private _throttle: number = 0;
-	private _scrollWindow: boolean = true;
-	private _data: any;
-	private _bestMatch!: boolean;
-	private _lastScrollY: number = 0;
-	private _scrollDirection: string = 'down';
-	private _triggerOnInit!: boolean;
+export class InviewContainerDirective implements AfterViewInit {
+	private readonly _element = inject(ElementRef);
+	private readonly _scrollObservable = inject(ScrollObservable);
+	private readonly _windowRuler = inject(WindowRuler);
+	private readonly _zone = inject(NgZone);
+	private readonly _destroyRef = inject(DestroyRef);
 
-	@Input()
-	set offset(offset: Array<number | string> | number | string) {
-		this._offset = OffsetResolver.create(offset).normalizeOffset();
-	}
-	@Input()
-	set triggerOnInit(triggerOnInit: boolean) {
-		this._triggerOnInit = !!triggerOnInit;
-	}
-	@Input()
-	set viewPortOffset(offset: Array<number> | number | string) {
-		this._viewPortOffset = OffsetResolver.create(offset).normalizeOffset();
-	}
-	@Input()
-	set throttle(throttle: number) {
-		this._throttle = throttle;
-	}
-	@Input()
-	set scrollWindow(sw: boolean) {
-		this._scrollWindow = !!sw;
-	}
-	@Input()
-	set data(_d: any) {
-		this._data = _d;
-	}
-	@Input()
-	set bestMatch(bm: any) {
-		this._bestMatch = !!bm;
-	}
+	readonly offset = input<Array<number | string> | number | string>([0, 0, 0, 0]);
+	readonly viewPortOffset = input<Array<number> | number | string>([0, 0, 0, 0]);
+	readonly throttle = input(0);
+	readonly scrollWindow = input(true);
+	readonly data = input<any>(undefined);
+	readonly bestMatch = input(false);
+	readonly triggerOnInit = input(false);
+
+	private readonly _normalizedOffset = computed(() =>
+		OffsetResolver.create(this.offset()).normalizeOffset()
+	);
+	private readonly _normalizedViewPortOffset = computed(() =>
+		OffsetResolver.create(this.viewPortOffset()).normalizeOffset()
+	);
+
+	private _lastScrollY = 0;
+	private _scrollDirection = 'down';
 
 	@Output() inview: EventEmitter<any> = new EventEmitter();
 	@ContentChildren(InviewItemDirective, { descendants: true, emitDistinctChangesOnly: false })
 	private _inviewChildren!: QueryList<InviewItemDirective>;
 
-	constructor(
-		private _element: ElementRef,
-		private _scrollObservable: ScrollObservable,
-		private _windowRuler: WindowRuler,
-		private _zone: NgZone,
-	) {}
-
 	ngAfterViewInit() {
-		this._scrollSuscription = this._scrollObservable
-			.scrollObservableFor(this._scrollWindow ? window : this._element.nativeElement)
+		this._scrollObservable
+			.scrollObservableFor(this.scrollWindow() ? window : this._element.nativeElement)
 			.pipe(
-				debounce(() => timer(this._throttle)),
+				debounce(() => timer(this.throttle())),
 				map(() => this._getViewPortRuler()),
 				tap(() => this._checkScrollDirection()),
+				takeUntilDestroyed(this._destroyRef),
 			)
 			.subscribe((containersBounds: ElementClientRect) => this.handleOnScroll(containersBounds));
-		if (this._triggerOnInit) return this.handleOnScroll(this._getViewPortRuler());
+		if (this.triggerOnInit()) return this.handleOnScroll(this._getViewPortRuler());
 	}
 
 	private _checkScrollDirection() {
-		if (this._scrollWindow) {
+		if (this.scrollWindow()) {
 			this._scrollDirection = window.scrollY > this._lastScrollY ? 'down' : 'up';
 			this._lastScrollY = window.scrollY;
 		} else {
@@ -101,30 +82,24 @@ export class InviewContainerDirective implements OnDestroy, AfterViewInit {
 	}
 
 	private _getViewPortRuler() {
-		return this._scrollWindow
+		return this.scrollWindow()
 			? this._windowRuler.getWindowViewPortRuler()
 			: PositionResolver.getBoundingClientRect(this._element.nativeElement);
-	}
-
-	ngOnDestroy() {
-		if (this._scrollSuscription) {
-			this._scrollSuscription.unsubscribe();
-		}
 	}
 
 	handleOnScroll(containersBounds: ElementClientRect) {
 		if (!this._inviewChildren || this._inviewChildren.length === 0) return;
 
-		const viewPortOffsetRect = PositionResolver.offsetRect(containersBounds, this._viewPortOffset);
+		const viewPortOffsetRect = PositionResolver.offsetRect(containersBounds, this._normalizedViewPortOffset());
 		const visibleChildren: Array<IChildWithReact> = this._inviewChildren
 			.toArray()
 			.map((child: InviewItemDirective): IChildWithReact => {
-				const elementRect = PositionResolver.offsetRect(child.getELementRect(), this._offset);
+				const elementRect = PositionResolver.offsetRect(child.getELementRect(), this._normalizedOffset());
 				return [child, elementRect, PositionResolver.distance(viewPortOffsetRect, elementRect)];
 			})
 			.filter(([child, rect]) => child.isVisible() && PositionResolver.intersectRect(rect, viewPortOffsetRect));
 
-		if (!this._bestMatch) {
+		if (!this.bestMatch()) {
 			const data: any = {};
 			data.inview = visibleChildren.map(([child]) => child.getData());
 			data.direction = this._scrollDirection;

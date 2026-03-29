@@ -1,17 +1,22 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, merge, fromEvent } from 'rxjs';
-import { map, share, tap } from 'rxjs/operators';
+import { share, tap } from 'rxjs/operators';
+
 import { WindowRuler } from './viewport-ruler';
 import { WindowElement } from './models';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ScrollObservable {
 	static _globalObservable: Observable<any>;
 	static _elementObservableReferences: WeakMap<WindowElement, Observable<any>> = new WeakMap();
+
+	private readonly _windowRuler = inject(WindowRuler);
+
 	static isWindow(windowElement: WindowElement) {
 		return Object.prototype.toString.call(windowElement).includes('Window');
 	}
-	constructor(private _windowRuler: WindowRuler) {
+
+	constructor() {
 		if (!ScrollObservable._globalObservable) {
 			ScrollObservable._globalObservable = this._getGlobalObservable();
 		}

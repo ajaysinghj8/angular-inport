@@ -70,7 +70,8 @@ class DataHostComponent {
 
 async function createFixture<T>(hostType: any): Promise<{ fixture: ComponentFixture<T>; host: T; directive: InviewDirective }> {
   await TestBed.configureTestingModule({
-    declarations: [hostType, InviewDirective],
+    declarations: [hostType],
+    imports: [InviewDirective],
     providers,
   }).compileComponents();
 
