@@ -22,6 +22,7 @@ import { WindowRuler } from './utils/viewport-ruler';
 import { OffsetResolver } from './utils/offset-resolver';
 import { PositionResolver } from './utils/position-resolver';
 import { ElementClientRect } from './utils/models';
+import { InviewContainerEvent, InviewBestMatchEvent } from './utils/events';
 
 type IChildWithReact = [InviewItemDirective, ElementClientRect, number];
 
@@ -54,7 +55,7 @@ export class InviewContainerDirective implements AfterViewInit {
 	private _lastScrollY = 0;
 	private _scrollDirection = 'down';
 
-	@Output() inview: EventEmitter<any> = new EventEmitter();
+	@Output() inview: EventEmitter<InviewContainerEvent | InviewBestMatchEvent> = new EventEmitter();
 	@ContentChildren(InviewItemDirective, { descendants: true, emitDistinctChangesOnly: false })
 	private _inviewChildren!: QueryList<InviewItemDirective>;
 
@@ -100,10 +101,11 @@ export class InviewContainerDirective implements AfterViewInit {
 			.filter(([child, rect]) => child.isVisible() && PositionResolver.intersectRect(rect, viewPortOffsetRect));
 
 		if (!this.bestMatch()) {
-			const data: any = {};
-			data.inview = visibleChildren.map(([child]) => child.getData());
-			data.direction = this._scrollDirection;
-			this._zone.run(() => this.inview.emit(data));
+			const event: InviewContainerEvent = {
+				inview: visibleChildren.map(([child]) => child.getData()),
+				direction: this._scrollDirection as 'up' | 'down',
+			};
+			this._zone.run(() => this.inview.emit(event));
 			return;
 		}
 
@@ -112,8 +114,8 @@ export class InviewContainerDirective implements AfterViewInit {
 			else if (distanceA < distanceB) return -1;
 			return 0;
 		})[0];
-		const data: any = bestMatch ? bestMatch[0].getData() : {};
-		data.direction = this._scrollDirection;
-		this._zone.run(() => this.inview.emit(data));
+		const itemData = bestMatch ? bestMatch[0].getData() : { id: undefined, data: undefined };
+		const event: InviewBestMatchEvent = { ...itemData, direction: this._scrollDirection as 'up' | 'down' };
+		this._zone.run(() => this.inview.emit(event));
 	}
 }

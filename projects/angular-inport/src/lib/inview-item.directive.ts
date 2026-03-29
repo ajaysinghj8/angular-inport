@@ -1,5 +1,6 @@
 import { Directive, ElementRef, inject, input } from '@angular/core';
 import { ElementClientRect } from './utils/models';
+import { InviewItemData } from './utils/events';
 import { PositionResolver } from './utils/position-resolver';
 
 @Directive({
@@ -18,7 +19,7 @@ export class InviewItemDirective {
 	isVisible(): boolean {
 		return PositionResolver.isVisible(this._element.nativeElement);
 	}
-	getData(): any {
+	getData(): InviewItemData {
 		return { id: this.id(), data: this.data() };
 	}
 }
