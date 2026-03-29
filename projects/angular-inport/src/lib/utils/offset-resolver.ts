@@ -1,7 +1,7 @@
 export class OffsetResolver {
 	constructor(private offset: Array<number | string> | number | string) {}
 
-	normalizeOffset() {
+	normalizeOffset(): Array<number | string> {
 		if (!Array.isArray(this.offset)) {
 			return [this.offset, this.offset, this.offset, this.offset];
 		}
@@ -11,6 +11,13 @@ export class OffsetResolver {
 			return this.offset.concat([this.offset[1]]);
 		}
 		return this.offset;
+	}
+
+	/** Convert normalized offset to a CSS rootMargin string for IntersectionObserver. */
+	toRootMargin(): string {
+		return this.normalizeOffset()
+			.map(v => (typeof v === 'string' && v.endsWith('%') ? v : `${v}px`))
+			.join(' ');
 	}
 
 	static create(offset: Array<number | string> | number | string) {

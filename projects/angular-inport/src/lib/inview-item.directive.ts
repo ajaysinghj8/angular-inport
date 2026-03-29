@@ -8,7 +8,7 @@ import { PositionResolver } from './utils/position-resolver';
 	standalone: true,
 })
 export class InviewItemDirective {
-	private readonly _element = inject(ElementRef);
+	readonly _element = inject(ElementRef);
 
 	readonly id = input<any>(undefined);
 	readonly data = input<any>(undefined);
