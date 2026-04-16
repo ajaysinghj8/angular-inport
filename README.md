@@ -1,6 +1,6 @@
 # Angular In Port / Angular In View Port
 
-**[Live Demo](https://ajaysinghj8.github.io/angular-inport/)**
+**[Live Demo](https://coderajay.github.io/angular-inport/)**
 
 ## Installation
 
